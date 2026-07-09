@@ -29,7 +29,7 @@ const ClassDetail = () => {
   return (
     <div>
       <Link
-        to="/app"
+        to="/app/classes"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
       >
         <ArrowLeft className="h-4 w-4" />

@@ -1,8 +1,13 @@
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Classes from "./pages/Classes";
 import ClassDetail from "./pages/ClassDetail";
 import AssignmentGrading from "./pages/AssignmentGrading";
+import Students from "./pages/Students";
+import Scanner from "./pages/Scanner";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
@@ -28,12 +33,17 @@ export const routers = [
         element: <AppLayout />,
         children: [
           { index: true, name: "dashboard", element: <Dashboard /> },
+          { path: "classes", name: "classes", element: <Classes /> },
           { path: "classes/:classId", name: "class-detail", element: <ClassDetail /> },
           {
             path: "classes/:classId/assignments/:assignmentId",
             name: "assignment-grading",
             element: <AssignmentGrading />,
           },
+          { path: "students", name: "students", element: <Students /> },
+          { path: "scanner", name: "scanner", element: <Scanner /> },
+          { path: "reports", name: "reports", element: <Reports /> },
+          { path: "settings", name: "settings", element: <Settings /> },
         ],
       },
     ],
