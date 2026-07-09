@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import type { AssignmentComponent } from "@/lib/depedGrading";
 
 export type AssignmentRow = Tables<"files">;
 
@@ -51,6 +52,10 @@ export function useAssignments(classId: string | undefined) {
         question_count: questionCount,
         max_score_per_q: input.maxScorePerQuestion,
         question_labels: isRubric ? input.criteria ?? [] : null,
+        // Sensible defaults; teachers retag component/quarter from the assignment
+        // settings dialog once created.
+        component: isRubric ? "performance_task" : "written_work",
+        quarter: 1,
       });
       if (error) throw error;
       await refresh();
@@ -67,7 +72,22 @@ export function useAssignments(classId: string | undefined) {
     [refresh]
   );
 
-  return { assignments, loading, createAssignment, deleteAssignment, refresh };
+  const updateAssignment = useCallback(
+    async (id: string, updates: { component?: AssignmentComponent; quarter?: number }) => {
+      const { error } = await supabase
+        .from("files")
+        .update({
+          ...(updates.component !== undefined ? { component: updates.component } : {}),
+          ...(updates.quarter !== undefined ? { quarter: updates.quarter } : {}),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      await refresh();
+    },
+    [refresh]
+  );
+
+  return { assignments, loading, createAssignment, deleteAssignment, updateAssignment, refresh };
 }
 
 export function useAssignment(assignmentId: string | undefined) {

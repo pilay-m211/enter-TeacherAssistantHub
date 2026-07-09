@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import type { SubjectGroup } from "@/lib/depedGrading";
 
 export type ClassRow = Tables<"folders">;
 
@@ -23,12 +24,14 @@ export function useClasses() {
   }, [refresh]);
 
   const createClass = useCallback(
-    async (name: string) => {
+    async (name: string, subjectGroup: SubjectGroup = "core") => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("folders").insert({ name, user_id: userId });
+      const { error } = await supabase
+        .from("folders")
+        .insert({ name, user_id: userId, subject_group: subjectGroup });
       if (error) throw error;
       await refresh();
     },
@@ -44,7 +47,22 @@ export function useClasses() {
     [refresh]
   );
 
-  return { classes, loading, createClass, deleteClass, refresh };
+  const updateClass = useCallback(
+    async (id: string, updates: { name?: string; subjectGroup?: SubjectGroup }) => {
+      const { error } = await supabase
+        .from("folders")
+        .update({
+          ...(updates.name !== undefined ? { name: updates.name } : {}),
+          ...(updates.subjectGroup !== undefined ? { subject_group: updates.subjectGroup } : {}),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      await refresh();
+    },
+    [refresh]
+  );
+
+  return { classes, loading, createClass, deleteClass, updateClass, refresh };
 }
 
 export function useClass(classId: string | undefined) {

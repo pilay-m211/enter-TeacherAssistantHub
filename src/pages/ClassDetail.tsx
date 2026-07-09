@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpenCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useClass } from "@/hooks/useClasses";
 import { useStudents } from "@/hooks/useStudents";
@@ -15,7 +15,13 @@ const ClassDetail = () => {
   const { classId } = useParams<{ classId: string }>();
   const { classItem, loading: classLoading } = useClass(classId);
   const { students, loading: studentsLoading, addStudent, addStudents, removeStudent } = useStudents(classId);
-  const { assignments, loading: assignmentsLoading, createAssignment, deleteAssignment } = useAssignments(classId);
+  const {
+    assignments,
+    loading: assignmentsLoading,
+    createAssignment,
+    deleteAssignment,
+    updateAssignment,
+  } = useAssignments(classId);
   const { toast } = useToast();
 
   if (classLoading) {
@@ -36,7 +42,15 @@ const ClassDetail = () => {
         Back to classes
       </Link>
 
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">{classItem?.name}</h1>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{classItem?.name}</h1>
+        <Link to={`/app/classes/${classId}/gradebook`}>
+          <Button variant="hero" size="sm" className="gap-2">
+            <BookOpenCheck className="h-4 w-4" />
+            Grade Book
+          </Button>
+        </Link>
+      </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-5">
         {/* Roster */}
@@ -77,7 +91,12 @@ const ClassDetail = () => {
               </div>
             ) : (
               classId && (
-                <AssignmentList classId={classId} assignments={assignments} onDelete={deleteAssignment} />
+                <AssignmentList
+                  classId={classId}
+                  assignments={assignments}
+                  onDelete={deleteAssignment}
+                  onUpdate={updateAssignment}
+                />
               )
             )}
           </div>

@@ -11,15 +11,24 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/depedGrading";
 
 interface CreateClassDialogProps {
-  onCreate: (name: string) => Promise<void>;
+  onCreate: (name: string, subjectGroup: SubjectGroup) => Promise<void>;
 }
 
 export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [subjectGroup, setSubjectGroup] = useState<SubjectGroup>("core");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -28,8 +37,9 @@ export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
     if (!name.trim()) return;
     setLoading(true);
     try {
-      await onCreate(name.trim());
+      await onCreate(name.trim(), subjectGroup);
       setName("");
+      setSubjectGroup("core");
       setOpen(false);
     } catch (err) {
       toast({
@@ -64,6 +74,24 @@ export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
               placeholder="e.g. Period 3 — Algebra I"
               autoFocus
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Subject group</Label>
+            <Select value={subjectGroup} onValueChange={(v) => setSubjectGroup(v as SubjectGroup)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(SUBJECT_GROUP_LABELS) as SubjectGroup[]).map((group) => (
+                  <SelectItem key={group} value={group}>
+                    {SUBJECT_GROUP_LABELS[group]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Sets the DepEd Written Work / Performance Task / Quarterly Assessment weights used for grading.
+            </p>
           </div>
           <DialogFooter>
             <Button type="submit" variant="hero" disabled={loading}>

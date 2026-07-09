@@ -4,6 +4,8 @@ import Dashboard from "./pages/Dashboard";
 import Classes from "./pages/Classes";
 import ClassDetail from "./pages/ClassDetail";
 import AssignmentGrading from "./pages/AssignmentGrading";
+import GradeBook from "./pages/GradeBook";
+import ReportCardPrint from "./pages/ReportCardPrint";
 import Students from "./pages/Students";
 import Scanner from "./pages/Scanner";
 import Reports from "./pages/Reports";
@@ -40,11 +42,18 @@ export const routers = [
             name: "assignment-grading",
             element: <AssignmentGrading />,
           },
+          { path: "classes/:classId/gradebook", name: "gradebook", element: <GradeBook /> },
           { path: "students", name: "students", element: <Students /> },
           { path: "scanner", name: "scanner", element: <Scanner /> },
           { path: "reports", name: "reports", element: <Reports /> },
           { path: "settings", name: "settings", element: <Settings /> },
         ],
+      },
+      /* Print-only route: intentionally outside AppLayout so no sidebar/topbar renders. */
+      {
+        path: "classes/:classId/report-card",
+        name: "report-card-print",
+        element: <ReportCardPrint />,
       },
     ],
   },

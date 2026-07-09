@@ -3363,11 +3363,13 @@ export type Database = {
       files: {
         Row: {
           assessment_type: string | null
+          component: string
           created_at: string | null
           folder_id: string | null
           id: string
           max_score_per_q: number | null
           name: string
+          quarter: number
           question_count: number | null
           question_labels: string[] | null
           section: string | null
@@ -3377,11 +3379,13 @@ export type Database = {
         }
         Insert: {
           assessment_type?: string | null
+          component?: string
           created_at?: string | null
           folder_id?: string | null
           id?: string
           max_score_per_q?: number | null
           name: string
+          quarter?: number
           question_count?: number | null
           question_labels?: string[] | null
           section?: string | null
@@ -3391,11 +3395,13 @@ export type Database = {
         }
         Update: {
           assessment_type?: string | null
+          component?: string
           created_at?: string | null
           folder_id?: string | null
           id?: string
           max_score_per_q?: number | null
           name?: string
+          quarter?: number
           question_count?: number | null
           question_labels?: string[] | null
           section?: string | null
@@ -3418,6 +3424,7 @@ export type Database = {
           id: string
           name: string
           parent_id: string | null
+          subject_group: string
           user_id: string
         }
         Insert: {
@@ -3425,6 +3432,7 @@ export type Database = {
           id?: string
           name: string
           parent_id?: string | null
+          subject_group?: string
           user_id: string
         }
         Update: {
@@ -3432,6 +3440,7 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string | null
+          subject_group?: string
           user_id?: string
         }
         Relationships: [
