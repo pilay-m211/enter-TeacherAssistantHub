@@ -3462,6 +3462,7 @@ export type Database = {
           id: string
           max_total: number | null
           scores: number[] | null
+          source: string
           student_id: string
           student_name: string
           updated_at: string | null
@@ -3476,6 +3477,7 @@ export type Database = {
           id?: string
           max_total?: number | null
           scores?: number[] | null
+          source?: string
           student_id: string
           student_name: string
           updated_at?: string | null
@@ -3490,6 +3492,7 @@ export type Database = {
           id?: string
           max_total?: number | null
           scores?: number[] | null
+          source?: string
           student_id?: string
           student_name?: string
           updated_at?: string | null
@@ -3536,6 +3539,61 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ocr_import_audit: {
+        Row: {
+          avg_confidence: number | null
+          created_at: string
+          file_id: string | null
+          folder_id: string | null
+          id: string
+          mode: string
+          raw_result: Json | null
+          rows_committed: number
+          rows_extracted: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          avg_confidence?: number | null
+          created_at?: string
+          file_id?: string | null
+          folder_id?: string | null
+          id?: string
+          mode: string
+          raw_result?: Json | null
+          rows_committed?: number
+          rows_extracted?: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          avg_confidence?: number | null
+          created_at?: string
+          file_id?: string | null
+          folder_id?: string | null
+          id?: string
+          mode?: string
+          raw_result?: Json | null
+          rows_committed?: number
+          rows_extracted?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_import_audit_file_id_fkey"
+            columns: ["file_id"]
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocr_import_audit_folder_id_fkey"
+            columns: ["folder_id"]
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

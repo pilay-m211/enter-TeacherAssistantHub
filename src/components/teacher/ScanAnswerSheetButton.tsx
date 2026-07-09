@@ -37,10 +37,11 @@ export function ScanAnswerSheetButton({
   const { toast } = useToast();
 
   const handleFile = async (file: File) => {
-    const result = await scan(file, {
+    const outcome = await scan(file, {
       question_count: questionCount,
       max_score_per_q: maxScorePerQuestion,
     });
+    const result = outcome?.result;
     if (!result) {
       toast({ title: "Scan failed", description: "Could not read the answer sheet.", variant: "destructive" });
       return;

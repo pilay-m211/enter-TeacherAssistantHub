@@ -27,7 +27,8 @@ export function ScanRosterButton({ onConfirm }: ScanRosterButtonProps) {
   const { toast } = useToast();
 
   const handleFile = async (file: File) => {
-    const result = await scan(file);
+    const outcome = await scan(file);
+    const result = outcome?.result;
     if (!result || result.students.length === 0) {
       toast({
         title: "No names detected",

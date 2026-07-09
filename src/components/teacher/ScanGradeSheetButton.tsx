@@ -14,6 +14,7 @@ import {
 import { OcrImageUploadTrigger } from "@/components/teacher/OcrImageUploadTrigger";
 import { useOcrScan } from "@/hooks/useOcrScan";
 import { useToast } from "@/hooks/use-toast";
+import { matchStudentByName } from "@/lib/studentMatching";
 import type { StudentRow } from "@/hooks/useStudents";
 
 interface MatchedEntry {
@@ -29,11 +30,6 @@ interface ScanGradeSheetButtonProps {
   onApply: (entries: { studentId: string; score: number }[]) => Promise<void>;
 }
 
-function matchStudent(name: string, students: StudentRow[]): StudentRow | undefined {
-  const normalized = name.trim().toLowerCase();
-  return students.find((s) => s.name.trim().toLowerCase() === normalized);
-}
-
 export function ScanGradeSheetButton({ students, maxTotal, onApply }: ScanGradeSheetButtonProps) {
   const { scan, isScanning } = useOcrScan("grade_sheet");
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -42,13 +38,14 @@ export function ScanGradeSheetButton({ students, maxTotal, onApply }: ScanGradeS
   const { toast } = useToast();
 
   const handleFile = async (file: File) => {
-    const result = await scan(file);
+    const outcome = await scan(file);
+    const result = outcome?.result;
     if (!result || result.entries.length === 0) {
       toast({ title: "No entries detected", description: "Try a clearer photo.", variant: "destructive" });
       return;
     }
     const matched = result.entries.map((entry) => {
-      const student = matchStudent(entry.name, students);
+      const { student } = matchStudentByName(entry.name, students);
       return {
         studentId: student?.id ?? null,
         name: student?.name ?? entry.name,

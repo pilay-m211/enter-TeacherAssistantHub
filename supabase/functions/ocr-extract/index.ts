@@ -1,6 +1,7 @@
 // Edge Function: ocr-extract
 // Uses Google Gemini (direct API, user-supplied key) to extract structured data
-// from photos of: class rosters, individual answer sheets, or handwritten grade sheets.
+// from photos of: class rosters, individual answer sheets, handwritten grade sheets,
+// or full multi-column class record tables (E-Class Record printouts / score grids).
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -11,13 +12,14 @@ const CORS_HEADERS = {
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-type Mode = "roster" | "answer_sheet" | "grade_sheet";
+type Mode = "roster" | "answer_sheet" | "grade_sheet" | "class_record_table";
 
 interface OcrRequestBody {
   mode: Mode;
   image_url: string;
   question_count?: number;
   max_score_per_q?: number;
+  hint_quarter?: number;
 }
 
 function promptForMode(mode: Mode, body: OcrRequestBody): string {
@@ -39,12 +41,36 @@ Respond with ONLY strict JSON, no markdown, no commentary, matching exactly this
 The "scores" and "confidence" arrays must both have exactly ${qCount} entries, in question order. "confidence" reflects how sure you are of each score (1 = very sure, 0 = illegible/guessed).`;
   }
 
-  // grade_sheet
-  return `You are reading a photo of a handwritten or printed grade sheet listing multiple students and their scores for one assignment.
+  if (mode === "grade_sheet") {
+    return `You are reading a photo of a handwritten or printed grade sheet listing multiple students and their scores for one assignment.
 Extract every row you can read as a student name and their total numeric score.
 Respond with ONLY strict JSON, no markdown, no commentary, matching exactly this shape:
 {"entries": [{"name": "Full Name", "score": number}]}
 If a score is illegible, skip that row entirely rather than guessing.`;
+  }
+
+  // class_record_table
+  const quarterHint = body.hint_quarter ? ` This sheet covers Quarter ${body.hint_quarter}.` : "";
+  return `You are reading a photo or scan of a printed class record / grade sheet table (like a DepEd E-Class Record page).
+The table has rows of student names and multiple columns of scores (e.g. quizzes, performance tasks, exams).${quarterHint}
+Read the column headers exactly as printed (e.g. "Quiz 1", "PT 1", "Unit Test"). Read every student row.
+For each student, extract their name and their score in each column, aligned by column position.
+If a cell is blank, illegible, or crossed out, use null for that cell rather than guessing.
+Respond with ONLY strict JSON, no markdown, no commentary, matching exactly this shape:
+{
+  "columns": ["Column Header 1", "Column Header 2"],
+  "rows": [
+    {
+      "name": "Full Name",
+      "name_confidence": 0.95,
+      "scores": [number|null, ...],
+      "score_confidence": [number 0-1, ...]
+    }
+  ]
+}
+Every row's "scores" and "score_confidence" arrays must have exactly the same length as "columns", in the same column order.
+"name_confidence" and each value in "score_confidence" reflect how sure you are (1 = very sure, 0 = illegible/guessed).
+Do not invent students or columns that are not visibly printed on the sheet.`;
 }
 
 async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; mimeType: string }> {

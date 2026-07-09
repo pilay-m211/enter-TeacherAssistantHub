@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ClassRow } from "@/hooks/useClasses";
 import type { StudentRow } from "@/hooks/useStudents";
@@ -51,6 +51,7 @@ export function useGradeBook(classId: string | undefined) {
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [grades, setGrades] = useState<GradeRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!classId) return;
@@ -84,7 +85,11 @@ export function useGradeBook(classId: string | undefined) {
     return () => {
       active = false;
     };
-  }, [classId]);
+  }, [classId, reloadKey]);
+
+  const refresh = useCallback(() => {
+    setReloadKey((k) => k + 1);
+  }, []);
 
   const data = useMemo<GradeBookData>(() => {
     const subjectGroup = (classItem?.subject_group as SubjectGroup) ?? "core";
@@ -155,5 +160,5 @@ export function useGradeBook(classId: string | undefined) {
     return { classItem, students, assignmentsByQuarter, quarterGrades, yearSummary };
   }, [classItem, students, assignments, grades]);
 
-  return { ...data, assignments, grades, loading };
+  return { ...data, assignments, grades, loading, refresh };
 }

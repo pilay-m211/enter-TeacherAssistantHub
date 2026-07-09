@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { upsertGradeRecord } from "@/lib/gradeWrites";
 
 export type GradeRow = Tables<"grade_ledger">;
 
@@ -31,28 +32,10 @@ export function useGrades(assignmentId: string | undefined) {
       maxTotal: number;
       feedback?: string;
       confidenceVals?: number[];
+      source?: "manual" | "ocr";
     }) => {
       if (!assignmentId) return;
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) throw new Error("Not authenticated");
-
-      const { error } = await supabase
-        .from("grade_ledger")
-        .upsert(
-          {
-            file_id: assignmentId,
-            student_id: params.studentId,
-            student_name: params.studentName,
-            scores: params.scores,
-            max_total: params.maxTotal,
-            feedback: params.feedback ?? null,
-            confidence_vals: params.confidenceVals ?? null,
-            user_id: userId,
-          },
-          { onConflict: "file_id,student_id" }
-        );
-      if (error) throw error;
+      await upsertGradeRecord({ assignmentId, ...params });
       await refresh();
     },
     [assignmentId, refresh]

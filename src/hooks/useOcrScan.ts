@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const OCR_BUCKET = "ocr-uploads";
 
-export type OcrMode = "roster" | "answer_sheet" | "grade_sheet";
+export type OcrMode = "roster" | "answer_sheet" | "grade_sheet" | "class_record_table";
 
 export interface RosterOcrResult {
   students: string[];
@@ -19,13 +19,27 @@ export interface GradeSheetOcrResult {
   entries: { name: string; score: number }[];
 }
 
+export interface ClassRecordTableRow {
+  name: string;
+  name_confidence: number;
+  scores: (number | null)[];
+  score_confidence: number[];
+}
+
+export interface ClassRecordTableOcrResult {
+  columns: string[];
+  rows: ClassRecordTableRow[];
+}
+
 type OcrResultFor<M extends OcrMode> = M extends "roster"
   ? RosterOcrResult
   : M extends "answer_sheet"
     ? AnswerSheetOcrResult
-    : GradeSheetOcrResult;
+    : M extends "grade_sheet"
+      ? GradeSheetOcrResult
+      : ClassRecordTableOcrResult;
 
-async function uploadOcrImage(file: File, userId: string): Promise<string> {
+async function uploadOcrImage(file: File, userId: string): Promise<{ imageUrl: string; storagePath: string }> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
 
@@ -37,7 +51,12 @@ async function uploadOcrImage(file: File, userId: string): Promise<string> {
 
   const { data } = supabase.storage.from(OCR_BUCKET).getPublicUrl(path);
   if (!data.publicUrl) throw new Error("Failed to get uploaded image URL");
-  return data.publicUrl;
+  return { imageUrl: data.publicUrl, storagePath: `${OCR_BUCKET}/${path}` };
+}
+
+export interface OcrScanOutcome<M extends OcrMode> {
+  result: OcrResultFor<M>;
+  storagePath: string;
 }
 
 export function useOcrScan<M extends OcrMode>(mode: M) {
@@ -47,8 +66,8 @@ export function useOcrScan<M extends OcrMode>(mode: M) {
   const scan = useCallback(
     async (
       file: File,
-      extra?: { question_count?: number; max_score_per_q?: number }
-    ): Promise<OcrResultFor<M> | null> => {
+      extra?: { question_count?: number; max_score_per_q?: number; hint_quarter?: number }
+    ): Promise<OcrScanOutcome<M> | null> => {
       setIsScanning(true);
       setError(null);
 
@@ -57,7 +76,7 @@ export function useOcrScan<M extends OcrMode>(mode: M) {
         const userId = userData.user?.id;
         if (!userId) throw new Error("Not authenticated");
 
-        const imageUrl = await uploadOcrImage(file, userId);
+        const { imageUrl, storagePath } = await uploadOcrImage(file, userId);
 
         const { data, error: fnError } = await supabase.functions.invoke("ocr-extract", {
           body: { mode, image_url: imageUrl, ...extra },
@@ -70,7 +89,7 @@ export function useOcrScan<M extends OcrMode>(mode: M) {
           throw new Error(data.error.message || "OCR failed");
         }
 
-        return data.result as OcrResultFor<M>;
+        return { result: data.result as OcrResultFor<M>, storagePath };
       } catch (err) {
         const message = err instanceof Error ? err.message : "OCR failed";
         setError(message);

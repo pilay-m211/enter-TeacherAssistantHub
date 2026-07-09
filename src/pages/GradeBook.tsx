@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGradeBook } from "@/hooks/useGradeBook";
+import { useStudents } from "@/hooks/useStudents";
+import { useAssignments } from "@/hooks/useAssignments";
+import { ImportClassRecordDialog } from "@/components/teacher/ImportClassRecordDialog";
 import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, type AssignmentComponent, type SubjectGroup } from "@/lib/depedGrading";
 import { exportEClassRecord, exportSummaryOfQuarterlyGrades, exportRawBackupCsv } from "@/lib/gradeBookExports";
 
@@ -19,8 +22,10 @@ function formatPct(value: number | null) {
 const GradeBook = () => {
   const { classId } = useParams<{ classId: string }>();
   const gradeBook = useGradeBook(classId);
-  const { classItem, students, assignmentsByQuarter, quarterGrades, yearSummary, assignments, grades, loading } =
+  const { classItem, students, assignmentsByQuarter, quarterGrades, yearSummary, assignments, grades, loading, refresh } =
     gradeBook;
+  const { addStudents } = useStudents(classId);
+  const { createAssignment } = useAssignments(classId);
   const [activeQuarter, setActiveQuarter] = useState("1");
 
   const assignmentMeta = useMemo(() => {
@@ -63,6 +68,16 @@ const GradeBook = () => {
           <p className="mt-1 text-sm text-muted-foreground">{SUBJECT_GROUP_LABELS[subjectGroup]}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {classId && (
+            <ImportClassRecordDialog
+              classId={classId}
+              students={students}
+              assignments={assignments}
+              addStudents={addStudents}
+              createAssignment={createAssignment}
+              onCommitted={refresh}
+            />
+          )}
           <Button
             variant="glass"
             size="sm"
