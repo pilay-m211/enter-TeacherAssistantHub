@@ -3369,6 +3369,7 @@ export type Database = {
           max_score_per_q: number | null
           name: string
           question_count: number | null
+          question_labels: string[] | null
           section: string | null
           student_count: number | null
           subject: string | null
@@ -3382,6 +3383,7 @@ export type Database = {
           max_score_per_q?: number | null
           name: string
           question_count?: number | null
+          question_labels?: string[] | null
           section?: string | null
           student_count?: number | null
           subject?: string | null
@@ -3395,6 +3397,7 @@ export type Database = {
           max_score_per_q?: number | null
           name?: string
           question_count?: number | null
+          question_labels?: string[] | null
           section?: string | null
           student_count?: number | null
           subject?: string | null
@@ -3445,6 +3448,7 @@ export type Database = {
           calculated_pct: number | null
           confidence_vals: number[] | null
           created_at: string | null
+          feedback: string | null
           file_id: string
           id: string
           max_total: number | null
@@ -3458,6 +3462,7 @@ export type Database = {
           calculated_pct?: number | null
           confidence_vals?: number[] | null
           created_at?: string | null
+          feedback?: string | null
           file_id: string
           id?: string
           max_total?: number | null
@@ -3471,6 +3476,7 @@ export type Database = {
           calculated_pct?: number | null
           confidence_vals?: number[] | null
           created_at?: string | null
+          feedback?: string | null
           file_id?: string
           id?: string
           max_total?: number | null
@@ -3551,6 +3557,37 @@ export type Database = {
           title?: string | null
         }
         Relationships: []
+      }
+      students: {
+        Row: {
+          created_at: string | null
+          folder_id: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder_id: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          folder_id?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_folder_id_fkey"
+            columns: ["folder_id"]
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

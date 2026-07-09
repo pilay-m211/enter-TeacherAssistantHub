@@ -4,90 +4,70 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
+  :root,
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Cyberpunk Academic — base surfaces */
+    --background: 234 54% 5%;
+    --foreground: 210 40% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 225 45% 9%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 225 45% 8%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Teal primary + cyan glow */
+    --primary: 172 66% 50%;
+    --primary-foreground: 234 54% 6%;
+    --primary-glow: 188 86% 53%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 225 30% 16%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 225 28% 13%;
+    --muted-foreground: 220 15% 62%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Indigo accent */
+    --accent: 234 89% 74%;
+    --accent-foreground: 234 54% 6%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Amber — reserved for OCR / raw-unverified indicators */
+    --warning: 38 92% 50%;
+    --warning-foreground: 234 54% 6%;
+
+    --border: 225 25% 22%;
+    --input: 225 25% 20%;
+    --ring: 172 66% 50%;
+
+    --radius: 0.75rem;
+
+    /* Glassmorphism surfaces */
+    --glass: 225 45% 9%;
+    --glass-border: 0 0% 100%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(172 66% 50%), hsl(188 86% 53%));
+    --gradient-text: linear-gradient(135deg, hsl(172 66% 62%), hsl(188 86% 58%), hsl(234 89% 74%));
+    --gradient-radial-glow: radial-gradient(circle at 50% 30%, hsl(172 66% 50% / 0.28), transparent 60%);
+    --gradient-cta: radial-gradient(circle at 30% 20%, hsl(188 86% 53% / 0.35), transparent 55%),
+      radial-gradient(circle at 75% 80%, hsl(234 89% 74% / 0.3), transparent 55%);
+
+    /* Glow shadows */
+    --shadow-glow: 0 0 40px hsl(172 66% 50% / 0.35);
+    --shadow-glow-lg: 0 24px 60px -15px hsl(172 66% 50% / 0.45);
+    --shadow-glow-accent: 0 0 40px hsl(234 89% 74% / 0.35);
+
+    --sidebar-background: 225 45% 8%;
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 172 66% 50%;
+    --sidebar-primary-foreground: 234 54% 6%;
+    --sidebar-accent: 225 30% 14%;
+    --sidebar-accent-foreground: 210 30% 90%;
+    --sidebar-border: 225 25% 18%;
+    --sidebar-ring: 172 66% 50%;
   }
 }
 
@@ -98,6 +78,8 @@
 
   body {
     @apply bg-background text-foreground;
+    background-image: var(--gradient-radial-glow);
+    background-attachment: fixed;
   }
 }
 
@@ -106,4 +88,83 @@ body,
 #root {
   width: 100%;
   height: 100%;
+}
+
+@layer utilities {
+  .glass-panel {
+    background: hsl(var(--glass) / 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid hsl(var(--glass-border) / 0.08);
+  }
+
+  .glass-panel-strong {
+    background: hsl(var(--glass) / 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border) / 0.12);
+  }
+
+  .text-gradient {
+    background-image: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-grid-overlay {
+    background-image:
+      linear-gradient(hsl(var(--glass-border) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--glass-border) / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .glow-hover {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+  }
+
+  .glow-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-glow-lg);
+    border-color: hsl(var(--primary) / 0.4);
+  }
+}
+
+@layer utilities {
+  @keyframes float-y {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+
+  @keyframes progress-loop {
+    0% { width: 8%; margin-left: 0%; }
+    50% { width: 60%; margin-left: 30%; }
+    100% { width: 8%; margin-left: 92%; }
+  }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .animate-float-y {
+    animation: float-y 6s ease-in-out infinite;
+  }
+
+  .animate-progress-loop {
+    animation: progress-loop 3.2s ease-in-out infinite;
+  }
+
+  .animate-marquee {
+    animation: marquee-scroll 28s linear infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2.4s ease-in-out infinite;
+  }
 }
