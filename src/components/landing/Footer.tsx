@@ -23,7 +23,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <LogoMark />
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              AI-assisted grading and rosters for teachers who'd rather teach than transcribe.
+              Veritas — AI-assisted grading and rosters for teachers who'd rather teach than transcribe.
             </p>
           </div>
           {FOOTER_COLUMNS.map((column) => (
@@ -42,7 +42,7 @@ export function Footer() {
           ))}
         </div>
         <div className="mt-10 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} GradeScan. Built for teachers.
+          © {new Date().getFullYear()} Veritas. Built for teachers.
         </div>
       </div>
     </footer>

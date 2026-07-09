@@ -1,16 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+
+const LOGO_URL = "https://cdn.enter.pro/resources/uid_100130341/0cb6792a-ed5e-44.png";
 
 export function LogoMark() {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[image:var(--gradient-primary)] shadow-[var(--shadow-glow)]">
-        <GraduationCap className="h-5 w-5 text-primary-foreground" />
-      </span>
+      <img
+        src={LOGO_URL}
+        alt="Veritas"
+        crossOrigin="anonymous"
+        className="h-9 w-9 rounded-lg shadow-[var(--shadow-glow)]"
+      />
       <span className="text-lg font-semibold tracking-tight text-foreground">
-        Grade<span className="text-gradient">Scan</span>
+        <span className="text-gradient">Veritas</span>
       </span>
     </Link>
   );

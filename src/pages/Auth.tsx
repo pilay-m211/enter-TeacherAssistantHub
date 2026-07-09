@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+const LOGO_URL = "https://cdn.enter.pro/resources/uid_100130341/0cb6792a-ed5e-44.png";
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("mode") === "signup" ? "signup" : "login";
@@ -17,7 +19,6 @@ const Auth = () => {
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,6 @@ const Auth = () => {
       password: signupPassword,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: signupName },
       },
     });
     setLoading(false);
@@ -71,11 +71,14 @@ const Auth = () => {
 
       <div className="relative w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[image:var(--gradient-primary)] shadow-[var(--shadow-glow)]">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
-          </span>
+          <img
+            src={LOGO_URL}
+            alt="Veritas"
+            crossOrigin="anonymous"
+            className="h-10 w-10 rounded-lg shadow-[var(--shadow-glow)]"
+          />
           <span className="text-xl font-semibold tracking-tight">
-            Grade<span className="text-gradient">Scan</span>
+            <span className="text-gradient">Veritas</span>
           </span>
         </Link>
 
@@ -125,16 +128,6 @@ const Auth = () => {
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="mt-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full name</Label>
-                    <Input
-                      id="signup-name"
-                      required
-                      value={signupName}
-                      onChange={(e) => setSignupName(e.target.value)}
-                      placeholder="Jane Doe"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
@@ -143,6 +136,7 @@ const Auth = () => {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       placeholder="you@school.edu"
+                      autoFocus
                     />
                   </div>
                   <div className="space-y-2">
