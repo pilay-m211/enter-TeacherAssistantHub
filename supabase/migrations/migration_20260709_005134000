@@ -1,0 +1,24 @@
+DO $$
+DECLARE
+  test_id uuid := gen_random_uuid();
+BEGIN
+  INSERT INTO auth.users (
+    id, instance_id, aud, role, email, encrypted_password,
+    email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+    created_at, updated_at, confirmation_token, recovery_token
+  ) VALUES (
+    test_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'veritas_test_signup_probe@example.com', crypt('Test1234!', gen_salt('bf')),
+    now(), '{"provider":"email","providers":["email"]}', '{}',
+    now(), now(), '', ''
+  );
+
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = test_id) THEN
+    RAISE EXCEPTION 'Profile row was not created by trigger';
+  END IF;
+
+  RAISE NOTICE 'Signup trigger works correctly for user %', test_id;
+
+  -- cleanup test data
+  DELETE FROM auth.users WHERE id = test_id;
+END $$;
