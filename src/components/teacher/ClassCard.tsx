@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Trash2, Users, ChevronRight } from "lucide-react";
+import { Trash2, Users, ChevronRight, BookOpenCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { ClassRow } from "@/hooks/useClasses";
@@ -31,13 +31,19 @@ export function ClassCard({ classItem, onDelete }: ClassCardProps) {
         </div>
         <CardTitle className="text-lg">{classItem.name}</CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="flex items-center justify-between pt-0">
         <Link
           to={`/app/classes/${classItem.id}`}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
         >
           Open class
           <ChevronRight className="h-4 w-4" />
+        </Link>
+        <Link to={`/app/classes/${classItem.id}/gradebook`}>
+          <Button variant="glass" size="sm" className="gap-1.5">
+            <BookOpenCheck className="h-3.5 w-3.5" />
+            Grade Book
+          </Button>
         </Link>
       </CardContent>
     </Card>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Users, GraduationCap, ClipboardList, Percent, ScanLine, ChartBar, ArrowRight, Loader2 } from "lucide-react";
+import { Users, GraduationCap, ClipboardList, Percent, ScanLine, ChartBar, ArrowRight, Loader2, BookOpenCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,14 +93,21 @@ const Dashboard = () => {
               <p className="py-4 text-sm text-muted-foreground">No classes yet. Create your first one.</p>
             ) : (
               classes.slice(0, 5).map((classItem) => (
-                <Link
+                <div
                   key={classItem.id}
-                  to={`/app/classes/${classItem.id}`}
-                  className="flex items-center justify-between rounded-md border border-border/50 bg-background/40 px-3 py-2.5 text-sm transition-colors hover:border-primary/40"
+                  className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2.5 text-sm transition-colors hover:border-primary/40"
                 >
-                  <span className="font-medium">{classItem.name}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </Link>
+                  <Link to={`/app/classes/${classItem.id}`} className="flex-1 font-medium">
+                    {classItem.name}
+                  </Link>
+                  <Link
+                    to={`/app/classes/${classItem.id}/gradebook`}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <BookOpenCheck className="h-3.5 w-3.5" />
+                    Grade Book
+                  </Link>
+                </div>
               ))
             )}
           </div>
@@ -114,6 +121,13 @@ const Dashboard = () => {
                 <ScanLine className="h-5 w-5 text-primary" />
                 <p className="mt-3 text-sm font-medium">Scan Documents</p>
                 <p className="mt-1 text-xs text-muted-foreground">Rosters, answer sheets, grade sheets</p>
+              </Card>
+            </Link>
+            <Link to={classes[0] ? `/app/classes/${classes[0].id}/gradebook` : "/app/classes"}>
+              <Card variant="glass" className="flex h-full flex-col p-4">
+                <BookOpenCheck className="h-5 w-5 text-primary" />
+                <p className="mt-3 text-sm font-medium">Grade Book</p>
+                <p className="mt-1 text-xs text-muted-foreground">DepEd E-Class Record & exports</p>
               </Card>
             </Link>
             <Link to="/app/reports">
