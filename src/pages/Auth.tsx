@@ -38,31 +38,44 @@ const Auth = () => {
       email: loginEmail,
       password: loginPassword,
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
       return;
     }
-    navigate("/app");
+    // Do not navigate here: wait for AuthContext's session to update via
+    // onAuthStateChange, then the effect above redirects to /app. Navigating
+    // immediately risks ProtectedRoute reading a stale (null) session and
+    // bouncing back to /auth.
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       return;
     }
+    if (!data.session) {
+      // Email confirmation is required before a session exists.
+      setLoading(false);
+      toast({
+        title: "Check your email",
+        description: "Confirm your email address to finish creating your account.",
+      });
+      return;
+    }
     toast({ title: "Account created", description: "Welcome! Setting up your dashboard…" });
-    navigate("/app");
+    // Session is already set; the effect above will redirect to /app as soon
+    // as AuthContext picks up the new session via onAuthStateChange.
   };
 
   return (
