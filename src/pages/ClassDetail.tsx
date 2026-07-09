@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Loader2, BookOpenCheck } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpenCheck, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClass } from "@/hooks/useClasses";
@@ -49,12 +49,20 @@ const ClassDetail = () => {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{classItem?.name}</h1>
-        <Link to={`/app/classes/${classId}/gradebook`}>
-          <Button variant="hero" size="sm" className="gap-2">
-            <BookOpenCheck className="h-4 w-4" />
-            Grade Book
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/app/classes/${classId}/attendance`}>
+            <Button variant="glass" size="sm" className="gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Take Attendance
+            </Button>
+          </Link>
+          <Link to={`/app/classes/${classId}/gradebook`}>
+            <Button variant="hero" size="sm" className="gap-2">
+              <BookOpenCheck className="h-4 w-4" />
+              Grade Book
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-5">

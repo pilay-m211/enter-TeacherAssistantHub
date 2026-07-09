@@ -5,6 +5,7 @@ import Classes from "./pages/Classes";
 import ClassDetail from "./pages/ClassDetail";
 import AssignmentGrading from "./pages/AssignmentGrading";
 import GradeBook from "./pages/GradeBook";
+import ClassAttendance from "./pages/ClassAttendance";
 import StudentProfile from "./pages/StudentProfile";
 import ReportCardPrint from "./pages/ReportCardPrint";
 import Students from "./pages/Students";
@@ -44,6 +45,7 @@ export const routers = [
             element: <AssignmentGrading />,
           },
           { path: "classes/:classId/gradebook", name: "gradebook", element: <GradeBook /> },
+          { path: "classes/:classId/attendance", name: "class-attendance", element: <ClassAttendance /> },
           {
             path: "classes/:classId/students/:studentId",
             name: "student-profile",

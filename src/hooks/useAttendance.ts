@@ -1,30 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import { summarizeAttendance, type AttendanceRow, type AttendanceStatus, type AttendanceSummary } from "@/lib/attendanceSummary";
 
-export type AttendanceRow = Tables<"attendance_records">;
-export type AttendanceStatus = "present" | "absent" | "late" | "excused";
-
-export interface AttendanceSummary {
-  present: number;
-  absent: number;
-  late: number;
-  excused: number;
-  total: number;
-  ratePct: number | null; // present+late+excused counted as "attended" for rate purposes
-}
-
-function summarize(records: AttendanceRow[]): AttendanceSummary {
-  const summary: AttendanceSummary = { present: 0, absent: 0, late: 0, excused: 0, total: records.length, ratePct: null };
-  for (const record of records) {
-    summary[record.status as AttendanceStatus] += 1;
-  }
-  if (summary.total > 0) {
-    const attended = summary.present + summary.late + summary.excused;
-    summary.ratePct = (attended / summary.total) * 100;
-  }
-  return summary;
-}
+export type { AttendanceRow, AttendanceStatus, AttendanceSummary };
 
 export function useAttendance(studentId: string | undefined, classId: string | undefined) {
   const [records, setRecords] = useState<AttendanceRow[]>([]);
@@ -63,6 +41,7 @@ export function useAttendance(studentId: string | undefined, classId: string | u
           quarter: params.quarter,
           status: params.status,
           note: params.note ?? null,
+          updated_at: new Date().toISOString(),
         },
         { onConflict: "student_id,folder_id,date" }
       );
@@ -83,18 +62,18 @@ export function useAttendance(studentId: string | undefined, classId: string | u
 
   const summaryByQuarter = useMemo(() => {
     const byQuarter: Record<number, AttendanceSummary> = {
-      1: summarize([]),
-      2: summarize([]),
-      3: summarize([]),
-      4: summarize([]),
+      1: summarizeAttendance([]),
+      2: summarizeAttendance([]),
+      3: summarizeAttendance([]),
+      4: summarizeAttendance([]),
     };
     for (let q = 1; q <= 4; q++) {
-      byQuarter[q] = summarize(records.filter((r) => r.quarter === q));
+      byQuarter[q] = summarizeAttendance(records.filter((r) => r.quarter === q));
     }
     return byQuarter;
   }, [records]);
 
-  const overallSummary = useMemo(() => summarize(records), [records]);
+  const overallSummary = useMemo(() => summarizeAttendance(records), [records]);
 
   return { records, loading, upsertAttendance, deleteAttendance, summaryByQuarter, overallSummary, refresh };
 }

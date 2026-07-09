@@ -1,0 +1,5 @@
+-- Support audit/update tracking on attendance edits, consistent with student_notes.updated_at.
+alter table attendance_records add column if not exists updated_at timestamptz not null default now();
+
+-- Fast lookup for "load a class's attendance for one date" — the core query of the class attendance screen.
+create index if not exists idx_attendance_folder_date on attendance_records(folder_id, date);
