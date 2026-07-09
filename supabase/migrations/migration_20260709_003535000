@@ -1,0 +1,22 @@
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, title, school_name, department)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'full_name', ''),
+    COALESCE(new.raw_user_meta_data->>'title', 'Teacher'),
+    new.raw_user_meta_data->>'school_name',
+    new.raw_user_meta_data->>'department'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+    school_name = COALESCE(EXCLUDED.school_name, public.profiles.school_name),
+    department = COALESCE(EXCLUDED.department, public.profiles.department);
+  RETURN new;
+END;
+$function$;
