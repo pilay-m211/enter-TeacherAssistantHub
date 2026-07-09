@@ -5,6 +5,7 @@ import Classes from "./pages/Classes";
 import ClassDetail from "./pages/ClassDetail";
 import AssignmentGrading from "./pages/AssignmentGrading";
 import GradeBook from "./pages/GradeBook";
+import StudentProfile from "./pages/StudentProfile";
 import ReportCardPrint from "./pages/ReportCardPrint";
 import Students from "./pages/Students";
 import Scanner from "./pages/Scanner";
@@ -43,6 +44,11 @@ export const routers = [
             element: <AssignmentGrading />,
           },
           { path: "classes/:classId/gradebook", name: "gradebook", element: <GradeBook /> },
+          {
+            path: "classes/:classId/students/:studentId",
+            name: "student-profile",
+            element: <StudentProfile />,
+          },
           { path: "students", name: "students", element: <Students /> },
           { path: "scanner", name: "scanner", element: <Scanner /> },
           { path: "reports", name: "reports", element: <Reports /> },

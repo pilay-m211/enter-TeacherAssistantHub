@@ -3360,6 +3360,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          created_at: string
+          date: string
+          folder_id: string
+          id: string
+          note: string | null
+          quarter: number
+          status: string
+          student_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          folder_id: string
+          id?: string
+          note?: string | null
+          quarter?: number
+          status: string
+          student_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          folder_id?: string
+          id?: string
+          note?: string | null
+          quarter?: number
+          status?: string
+          student_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_folder_id_fkey"
+            columns: ["folder_id"]
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       files: {
         Row: {
           assessment_type: string | null
@@ -3625,12 +3674,115 @@ export type Database = {
         }
         Relationships: []
       }
+      student_notes: {
+        Row: {
+          content: string
+          created_at: string
+          folder_id: string | null
+          id: string
+          student_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          student_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          student_id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_notes_folder_id_fkey"
+            columns: ["folder_id"]
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_notes_student_id_fkey"
+            columns: ["student_id"]
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_profiles: {
+        Row: {
+          address: string | null
+          archived_at: string | null
+          created_at: string
+          grade_level: string | null
+          id: string
+          notes_summary: string | null
+          parent_contact: string | null
+          parent_guardian_name: string | null
+          photo_url: string | null
+          student_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          archived_at?: string | null
+          created_at?: string
+          grade_level?: string | null
+          id?: string
+          notes_summary?: string | null
+          parent_contact?: string | null
+          parent_guardian_name?: string | null
+          photo_url?: string | null
+          student_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          archived_at?: string | null
+          created_at?: string
+          grade_level?: string | null
+          id?: string
+          notes_summary?: string | null
+          parent_contact?: string | null
+          parent_guardian_name?: string | null
+          photo_url?: string | null
+          student_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_profiles_student_id_fkey"
+            columns: ["student_id"]
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           created_at: string | null
           folder_id: string
           id: string
           name: string
+          status: string
+          student_number: string | null
           user_id: string
         }
         Insert: {
@@ -3638,6 +3790,8 @@ export type Database = {
           folder_id: string
           id?: string
           name: string
+          status?: string
+          student_number?: string | null
           user_id: string
         }
         Update: {
@@ -3645,6 +3799,8 @@ export type Database = {
           folder_id?: string
           id?: string
           name?: string
+          status?: string
+          student_number?: string | null
           user_id?: string
         }
         Relationships: [

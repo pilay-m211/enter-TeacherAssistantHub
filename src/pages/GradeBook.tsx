@@ -164,7 +164,14 @@ const GradeBook = () => {
                         <TableBody>
                           {rows.map((row) => (
                             <TableRow key={row.studentId} className="border-border/40">
-                              <TableCell className="font-medium">{row.studentName}</TableCell>
+                              <TableCell className="font-medium">
+                                <Link
+                                  to={`/app/classes/${classId}/students/${row.studentId}`}
+                                  className="transition-colors hover:text-primary hover:underline"
+                                >
+                                  {row.studentName}
+                                </Link>
+                              </TableCell>
                               <TableCell className="text-right text-muted-foreground">
                                 {formatPct(row.writtenWorkPct)}
                               </TableCell>
@@ -218,7 +225,14 @@ const GradeBook = () => {
                 <TableBody>
                   {yearSummary.map((student) => (
                     <TableRow key={student.studentId} className="border-border/40">
-                      <TableCell className="font-medium">{student.studentName}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link
+                          to={`/app/classes/${classId}/students/${student.studentId}`}
+                          className="transition-colors hover:text-primary hover:underline"
+                        >
+                          {student.studentName}
+                        </Link>
+                      </TableCell>
                       {student.quarterlyGrades.map((grade, index) => (
                         <TableCell key={index} className="text-right text-muted-foreground">
                           {grade ?? "—"}

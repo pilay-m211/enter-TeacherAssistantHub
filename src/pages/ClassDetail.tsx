@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, BookOpenCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useClass } from "@/hooks/useClasses";
 import { useStudents } from "@/hooks/useStudents";
 import { useAssignments } from "@/hooks/useAssignments";
@@ -23,6 +25,9 @@ const ClassDetail = () => {
     updateAssignment,
   } = useAssignments(classId);
   const { toast } = useToast();
+  const [showArchived, setShowArchived] = useState(false);
+
+  const visibleStudents = showArchived ? students : students.filter((s) => s.status === "active");
 
   if (classLoading) {
     return (
@@ -67,13 +72,19 @@ const ClassDetail = () => {
               <AddStudentDialog onAdd={addStudent} />
             </div>
           </div>
+          <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <Checkbox checked={showArchived} onCheckedChange={(checked) => setShowArchived(Boolean(checked))} />
+            Show archived / inactive students
+          </label>
           <div className="mt-4">
             {studentsLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
             ) : (
-              <StudentRosterTable students={students} onRemove={removeStudent} />
+              classId && (
+                <StudentRosterTable classId={classId} students={visibleStudents} onRemove={removeStudent} />
+              )
             )}
           </div>
         </section>
