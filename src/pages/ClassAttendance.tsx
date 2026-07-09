@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, CheckCheck, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useClassAttendance } from "@/hooks/useClassAttendance";
 import { AttendanceStatusToggle } from "@/components/attendance/AttendanceStatusToggle";
 import { AttendanceReasonInput } from "@/components/attendance/AttendanceReasonInput";
 import { ClassAttendanceSummaryCard } from "@/components/attendance/ClassAttendanceSummaryCard";
+import { SearchInput } from "@/components/search/SearchInput";
 import { useToast } from "@/hooks/use-toast";
 
 const ClassAttendance = () => {
@@ -38,6 +40,13 @@ const ClassAttendance = () => {
     todayIso,
   } = useClassAttendance(classId);
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
+
+  const visibleStudents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return students;
+    return students.filter((s) => s.name.toLowerCase().includes(query));
+  }, [students, search]);
 
   const handleSave = async () => {
     try {
@@ -116,6 +125,15 @@ const ClassAttendance = () => {
         </Button>
       </div>
 
+      {students.length > 0 && (
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search students…"
+          className="mt-4 max-w-sm"
+        />
+      )}
+
       <div className="mt-4">
         {loading ? (
           <div className="flex justify-center py-16">
@@ -125,9 +143,13 @@ const ClassAttendance = () => {
           <Card variant="glass" className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm text-muted-foreground">Add students to this class before taking attendance.</p>
           </Card>
+        ) : visibleStudents.length === 0 ? (
+          <Card variant="glass" className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-sm text-muted-foreground">No students match "{search.trim()}".</p>
+          </Card>
         ) : (
           <div className="space-y-2">
-            {students.map((student) => {
+            {visibleStudents.map((student) => {
               const entry = draft[student.id] ?? { status: "present" as const, note: "" };
               const needsNote = entry.status !== "present";
               return (

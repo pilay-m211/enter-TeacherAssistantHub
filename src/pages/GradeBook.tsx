@@ -10,6 +10,7 @@ import { useGradeBook } from "@/hooks/useGradeBook";
 import { useStudents } from "@/hooks/useStudents";
 import { useAssignments } from "@/hooks/useAssignments";
 import { ImportClassRecordDialog } from "@/components/teacher/ImportClassRecordDialog";
+import { SearchInput } from "@/components/search/SearchInput";
 import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, type AssignmentComponent, type SubjectGroup } from "@/lib/depedGrading";
 import { exportEClassRecord, exportSummaryOfQuarterlyGrades, exportRawBackupCsv } from "@/lib/gradeBookExports";
 
@@ -27,6 +28,12 @@ const GradeBook = () => {
   const { addStudents } = useStudents(classId);
   const { createAssignment } = useAssignments(classId);
   const [activeQuarter, setActiveQuarter] = useState("1");
+  const [studentSearch, setStudentSearch] = useState("");
+
+  const matchesSearch = (name: string) => {
+    const query = studentSearch.trim().toLowerCase();
+    return !query || name.toLowerCase().includes(query);
+  };
 
   const assignmentMeta = useMemo(() => {
     const map = new Map<string, { name: string; component: AssignmentComponent; quarter: number; maxTotal: number }>();
@@ -120,7 +127,14 @@ const GradeBook = () => {
         </Card>
       ) : (
         <>
-          <Tabs value={activeQuarter} onValueChange={setActiveQuarter} className="mt-8">
+          <SearchInput
+            value={studentSearch}
+            onChange={setStudentSearch}
+            placeholder="Search students…"
+            className="mt-6 max-w-sm"
+          />
+
+          <Tabs value={activeQuarter} onValueChange={setActiveQuarter} className="mt-6">
             <TabsList className="grid w-full grid-cols-4 sm:w-auto">
               {QUARTERS.map((q) => (
                 <TabsTrigger key={q} value={String(q)}>
@@ -130,7 +144,7 @@ const GradeBook = () => {
             </TabsList>
 
             {QUARTERS.map((quarter) => {
-              const rows = quarterGrades[quarter] ?? [];
+              const rows = (quarterGrades[quarter] ?? []).filter((row) => matchesSearch(row.studentName));
               const quarterAssignments = assignmentsByQuarter[quarter] ?? [];
 
               return (
@@ -140,6 +154,10 @@ const GradeBook = () => {
                       <p className="text-sm text-muted-foreground">
                         No assignments tagged to Quarter {quarter} yet. Tag assignments via their grading settings.
                       </p>
+                    </Card>
+                  ) : rows.length === 0 ? (
+                    <Card variant="glass" className="flex flex-col items-center justify-center py-12 text-center">
+                      <p className="text-sm text-muted-foreground">No students match "{studentSearch.trim()}".</p>
                     </Card>
                   ) : (
                     <Card variant="glass" className="overflow-hidden">
@@ -223,7 +241,7 @@ const GradeBook = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {yearSummary.map((student) => (
+                  {yearSummary.filter((student) => matchesSearch(student.studentName)).map((student) => (
                     <TableRow key={student.studentId} className="border-border/40">
                       <TableCell className="font-medium">
                         <Link

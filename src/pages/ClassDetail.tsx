@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, BookOpenCheck, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { AddStudentDialog } from "@/components/teacher/AddStudentDialog";
 import { ScanRosterButton } from "@/components/teacher/ScanRosterButton";
 import { AssignmentList } from "@/components/teacher/AssignmentList";
 import { CreateAssignmentDialog } from "@/components/teacher/CreateAssignmentDialog";
+import { SearchInput } from "@/components/search/SearchInput";
 import { useToast } from "@/hooks/use-toast";
 
 const ClassDetail = () => {
@@ -26,8 +27,23 @@ const ClassDetail = () => {
   } = useAssignments(classId);
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
+  const [rosterSearch, setRosterSearch] = useState("");
+  const [assignmentSearch, setAssignmentSearch] = useState("");
 
-  const visibleStudents = showArchived ? students : students.filter((s) => s.status === "active");
+  const visibleStudents = useMemo(() => {
+    const statusFiltered = showArchived ? students : students.filter((s) => s.status === "active");
+    const query = rosterSearch.trim().toLowerCase();
+    if (!query) return statusFiltered;
+    return statusFiltered.filter(
+      (s) => s.name.toLowerCase().includes(query) || s.student_number?.toLowerCase().includes(query)
+    );
+  }, [students, showArchived, rosterSearch]);
+
+  const visibleAssignments = useMemo(() => {
+    const query = assignmentSearch.trim().toLowerCase();
+    if (!query) return assignments;
+    return assignments.filter((a) => a.name.toLowerCase().includes(query));
+  }, [assignments, assignmentSearch]);
 
   if (classLoading) {
     return (
@@ -84,6 +100,12 @@ const ClassDetail = () => {
             <Checkbox checked={showArchived} onCheckedChange={(checked) => setShowArchived(Boolean(checked))} />
             Show archived / inactive students
           </label>
+          <SearchInput
+            value={rosterSearch}
+            onChange={setRosterSearch}
+            placeholder="Search students…"
+            className="mt-3"
+          />
           <div className="mt-4">
             {studentsLoading ? (
               <div className="flex justify-center py-10">
@@ -103,6 +125,12 @@ const ClassDetail = () => {
             <h2 className="text-lg font-semibold">Assignments</h2>
             <CreateAssignmentDialog onCreate={createAssignment} />
           </div>
+          <SearchInput
+            value={assignmentSearch}
+            onChange={setAssignmentSearch}
+            placeholder="Search assignments…"
+            className="mt-3"
+          />
           <div className="mt-4">
             {assignmentsLoading ? (
               <div className="flex justify-center py-10">
@@ -112,7 +140,7 @@ const ClassDetail = () => {
               classId && (
                 <AssignmentList
                   classId={classId}
-                  assignments={assignments}
+                  assignments={visibleAssignments}
                   onDelete={deleteAssignment}
                   onUpdate={updateAssignment}
                 />

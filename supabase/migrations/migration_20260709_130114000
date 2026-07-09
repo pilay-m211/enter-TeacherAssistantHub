@@ -1,0 +1,9 @@
+create extension if not exists pg_trgm;
+
+-- Fast case-insensitive partial matching (ILIKE '%term%') for global search targets.
+create index if not exists idx_students_name_trgm on students using gin (name gin_trgm_ops);
+create index if not exists idx_students_number_trgm on students using gin (student_number gin_trgm_ops);
+create index if not exists idx_folders_name_trgm on folders using gin (name gin_trgm_ops);
+create index if not exists idx_files_name_trgm on files using gin (name gin_trgm_ops);
+create index if not exists idx_student_notes_content_trgm on student_notes using gin (content gin_trgm_ops);
+create index if not exists idx_student_notes_title_trgm on student_notes using gin (title gin_trgm_ops);

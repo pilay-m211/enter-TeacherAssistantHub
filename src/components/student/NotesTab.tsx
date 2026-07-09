@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Trash2, Pencil, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { SearchInput } from "@/components/search/SearchInput";
+import { HighlightMatch } from "@/lib/searchHighlight";
 import { useToast } from "@/hooks/use-toast";
 import type { StudentNoteRow } from "@/hooks/useStudentNotes";
 
@@ -29,7 +31,16 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
   const { toast } = useToast();
+
+  const filteredNotes = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return notes;
+    return notes.filter(
+      (n) => n.title?.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+    );
+  }, [notes, search]);
 
   const openForCreate = () => {
     setEditingId(null);
@@ -73,10 +84,13 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {notes.length > 0 && (
+          <SearchInput value={search} onChange={setSearch} placeholder="Search notes…" className="max-w-xs" />
+        )}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="hero" size="sm" className="gap-2" onClick={openForCreate}>
+            <Button variant="hero" size="sm" className="ml-auto gap-2" onClick={openForCreate}>
               <Plus className="h-4 w-4" />
               Add Note
             </Button>
@@ -116,14 +130,24 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
         <Card variant="glass" className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-sm text-muted-foreground">No notes yet. Add one to track observations or remarks.</p>
         </Card>
+      ) : filteredNotes.length === 0 ? (
+        <Card variant="glass" className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-sm text-muted-foreground">No notes match "{search.trim()}".</p>
+        </Card>
       ) : (
         <div className="space-y-3">
-          {notes.map((note) => (
+          {filteredNotes.map((note) => (
             <Card key={note.id} variant="glass" className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  {note.title && <h4 className="font-medium">{note.title}</h4>}
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{note.content}</p>
+                  {note.title && (
+                    <h4 className="font-medium">
+                      <HighlightMatch text={note.title} query={search} />
+                    </h4>
+                  )}
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                    <HighlightMatch text={note.content} query={search} />
+                  </p>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {new Date(note.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </p>
