@@ -125,7 +125,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
                         <HighlightMatch text={assignment.name} query={debouncedQuery} />
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {assignment.className} · Q{assignment.quarter}
+                        {assignment.className} · T{assignment.semester}
                       </span>
                     </div>
                   </CommandItem>

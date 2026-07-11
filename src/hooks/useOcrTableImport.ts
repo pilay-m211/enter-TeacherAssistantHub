@@ -6,7 +6,7 @@ import { upsertGradeRecord } from "@/lib/gradeWrites";
 import { matchStudentByName } from "@/lib/studentMatching";
 import type { StudentRow } from "@/hooks/useStudents";
 import type { AssignmentRow, CreateAssignmentInput } from "@/hooks/useAssignments";
-import type { AssignmentComponent } from "@/lib/gradingConfig";
+import type { AssignmentComponent, Term } from "@/lib/gradingConfig";
 
 export interface OcrTableColumnMapping {
   header: string;
@@ -31,7 +31,7 @@ export interface OcrTableRowDraft {
 
 interface ImportContext {
   classId: string;
-  quarter: number;
+  semester: Term;
   students: StudentRow[];
   assignments: AssignmentRow[];
   addStudents: (names: string[]) => Promise<void>;
@@ -49,8 +49,8 @@ export function useOcrTableImport() {
   const [rawResult, setRawResult] = useState<ClassRecordTableOcrResult | null>(null);
 
   const runScan = useCallback(
-    async (file: File, quarter: number, students: StudentRow[]) => {
-      const outcome = await scan(file, { hint_quarter: quarter });
+    async (file: File, semester: Term, students: StudentRow[]) => {
+      const outcome = await scan(file, { hint_term: semester });
       if (!outcome) return false;
 
       const { result, storagePath: path } = outcome;
@@ -127,7 +127,7 @@ export function useOcrTableImport() {
           gradingType: "simple",
           maxScorePerQuestion: mapping.newAssignmentMaxScore,
           component: mapping.newAssignmentComponent,
-          quarter: ctx.quarter,
+          semester: ctx.semester,
         });
         if (created) columnToAssignmentId.set(colIndex, created.id);
       }

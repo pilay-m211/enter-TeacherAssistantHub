@@ -1,0 +1,21 @@
+-- Trisemester rearchitecture: DepEd DO 15, s. 2026 replaces the old 4-quarter
+-- grading calendar with 3 terms per school year, applied app-wide (JHS,
+-- elementary, and SHS alike per explicit product decision). The `semester`
+-- column (already constrained to 1|2|3) becomes the sole grading-period field;
+-- the legacy 4-quarter `quarter` column is now fully retired.
+
+-- assignments
+ALTER TABLE assignments DROP CONSTRAINT IF EXISTS assignments_quarter_check;
+ALTER TABLE assignments DROP COLUMN IF EXISTS quarter;
+
+-- attendance_records
+DROP INDEX IF EXISTS idx_attendance_folder_quarter;
+ALTER TABLE attendance_records DROP CONSTRAINT IF EXISTS attendance_records_quarter_check;
+ALTER TABLE attendance_records DROP COLUMN IF EXISTS quarter;
+CREATE INDEX IF NOT EXISTS idx_attendance_class_semester ON attendance_records(class_id, semester);
+
+-- grade_records
+DROP INDEX IF EXISTS idx_grade_records_quarter_sem;
+ALTER TABLE grade_records DROP CONSTRAINT IF EXISTS grade_records_quarter_check;
+ALTER TABLE grade_records DROP COLUMN IF EXISTS quarter;
+CREATE INDEX IF NOT EXISTS idx_grade_records_semester ON grade_records(semester);

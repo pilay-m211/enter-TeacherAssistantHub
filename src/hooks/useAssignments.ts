@@ -12,7 +12,6 @@ export interface CreateAssignmentInput {
   maxScorePerQuestion: number;
   criteria?: string[]; // only used when gradingType === "rubric"
   component?: AssignmentComponent;
-  quarter?: number;
   semester?: 1 | 2 | 3;
 }
 
@@ -58,11 +57,10 @@ export function useAssignments(classId: string | undefined) {
           max_score_per_q: input.maxScorePerQuestion,
           max_score: maxScore,
           question_labels: isRubric ? input.criteria ?? [] : null,
-          // Sensible defaults; teachers retag component/quarter from the assignment
+          // Sensible defaults; teachers retag component/term from the assignment
           // settings dialog once created, or the caller can pass them explicitly
           // (used by the OCR table importer to tag detected columns).
           component: input.component ?? (isRubric ? "performance_task" : "written_oral"),
-          quarter: input.quarter ?? 1,
           semester: input.semester ?? 1,
         })
         .select()
@@ -84,12 +82,11 @@ export function useAssignments(classId: string | undefined) {
   );
 
   const updateAssignment = useCallback(
-    async (id: string, updates: { component?: AssignmentComponent; quarter?: number; semester?: 1 | 2 | 3 }) => {
+    async (id: string, updates: { component?: AssignmentComponent; semester?: 1 | 2 | 3 }) => {
       const { error } = await supabase
         .from("assignments")
         .update({
           ...(updates.component !== undefined ? { component: updates.component } : {}),
-          ...(updates.quarter !== undefined ? { quarter: updates.quarter } : {}),
           ...(updates.semester !== undefined ? { semester: updates.semester } : {}),
         })
         .eq("id", id);

@@ -27,8 +27,8 @@ const StudentProfile = () => {
     archiveStudent,
     restoreStudent,
   } = useStudentProfile(studentId);
-  const { quarters, finalGrade, remarks, loading: gradesLoading } = useStudentGradeHistory(studentId, classId);
-  const { records, summaryByQuarter, overallSummary, upsertAttendance, deleteAttendance } = useAttendance(
+  const { terms, finalGrade, remarks, loading: gradesLoading } = useStudentGradeHistory(studentId, classId);
+  const { records, summaryByTerm, overallSummary, upsertAttendance, deleteAttendance } = useAttendance(
     studentId,
     classId
   );
@@ -45,7 +45,7 @@ const StudentProfile = () => {
     );
   }
 
-  const currentQuarterGrades = quarters.flatMap((q) => q.assignments);
+  const currentTermGrades = terms.flatMap((t) => t.assignments);
 
   const handleAction = async (action: () => Promise<void>, successMessage: string) => {
     try {
@@ -99,24 +99,24 @@ const StudentProfile = () => {
 
         <TabsContent value="overview" className="mt-4 space-y-4">
           <ProgressSummaryCard
-            quarters={quarters}
+            terms={terms}
             finalGrade={finalGrade}
             remarks={remarks}
             attendanceSummary={overallSummary}
           />
           {classId && (
-            <RecentActivityList classId={classId} recentGrades={currentQuarterGrades} recentNotes={notes} />
+            <RecentActivityList classId={classId} recentGrades={currentTermGrades} recentNotes={notes} />
           )}
         </TabsContent>
 
         <TabsContent value="grades" className="mt-4">
-          {classId && <GradeHistoryTab classId={classId} quarters={quarters} />}
+          {classId && <GradeHistoryTab classId={classId} terms={terms} />}
         </TabsContent>
 
         <TabsContent value="attendance" className="mt-4">
           <AttendanceTab
             records={records}
-            summaryByQuarter={summaryByQuarter}
+            summaryByTerm={summaryByTerm}
             onUpsert={upsertAttendance}
             onDelete={(id) => handleAction(() => deleteAttendance(id), "Attendance record removed")}
           />

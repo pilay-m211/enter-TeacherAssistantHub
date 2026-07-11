@@ -23,12 +23,13 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { TERMS, TERM_LABELS, type Term } from "@/lib/gradingConfig";
 import type { AttendanceRow, AttendanceStatus, AttendanceSummary } from "@/hooks/useAttendance";
 
 interface AttendanceTabProps {
   records: AttendanceRow[];
-  summaryByQuarter: Record<number, AttendanceSummary>;
-  onUpsert: (params: { date: string; quarter: number; status: AttendanceStatus; note?: string | null }) => Promise<void>;
+  summaryByTerm: Record<Term, AttendanceSummary>;
+  onUpsert: (params: { date: string; semester: Term; status: AttendanceStatus; note?: string | null }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -46,10 +47,10 @@ const STATUS_BADGE: Record<AttendanceStatus, "verified" | "destructive" | "ocr" 
   excused: "outline",
 };
 
-export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }: AttendanceTabProps) {
+export function AttendanceTab({ records, summaryByTerm, onUpsert, onDelete }: AttendanceTabProps) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [quarter, setQuarter] = useState("1");
+  const [semester, setSemester] = useState<Term>(1);
   const [status, setStatus] = useState<AttendanceStatus>("present");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -58,7 +59,7 @@ export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }:
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onUpsert({ date, quarter: Number(quarter), status, note: note.trim() || null });
+      await onUpsert({ date, semester, status, note: note.trim() || null });
       toast({ title: "Attendance recorded" });
       setOpen(false);
       setNote("");
@@ -75,12 +76,12 @@ export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }:
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[1, 2, 3, 4].map((q) => {
-          const summary = summaryByQuarter[q];
+      <div className="grid grid-cols-3 gap-3">
+        {TERMS.map((t) => {
+          const summary = summaryByTerm[t];
           return (
-            <Card key={q} variant="glass" className="p-4 text-center">
-              <p className="text-xs text-muted-foreground">Quarter {q}</p>
+            <Card key={t} variant="glass" className="p-4 text-center">
+              <p className="text-xs text-muted-foreground">{TERM_LABELS[t]}</p>
               <p className="mt-1 text-xl font-bold">{summary.ratePct !== null ? `${summary.ratePct.toFixed(0)}%` : "—"}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.total} record{summary.total === 1 ? "" : "s"}</p>
             </Card>
@@ -107,15 +108,15 @@ export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }:
                   <Input id="attendance-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Quarter</Label>
-                  <Select value={quarter} onValueChange={setQuarter}>
+                  <Label>Term</Label>
+                  <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as Term)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 3, 4].map((q) => (
-                        <SelectItem key={q} value={String(q)}>
-                          Quarter {q}
+                      {TERMS.map((t) => (
+                        <SelectItem key={t} value={String(t)}>
+                          {TERM_LABELS[t]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -162,7 +163,7 @@ export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }:
             <TableHeader>
               <TableRow className="border-border/60 hover:bg-transparent">
                 <TableHead>Date</TableHead>
-                <TableHead>Quarter</TableHead>
+                <TableHead>Term</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Note</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -172,15 +173,15 @@ export function AttendanceTab({ records, summaryByQuarter, onUpsert, onDelete }:
               {records.map((record) => (
                 <TableRow key={record.id} className="border-border/40">
                   <TableCell className="font-medium">
-                    {new Date(record.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                    {new Date(record.attendance_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">Q{record.quarter}</TableCell>
+                  <TableCell className="text-muted-foreground">{TERM_LABELS[(record.semester as Term) ?? 1]}</TableCell>
                   <TableCell>
                     <Badge variant={STATUS_BADGE[record.status as AttendanceStatus]}>
                       {STATUS_LABELS[record.status as AttendanceStatus]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{record.note ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{record.reason_note ?? "—"}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

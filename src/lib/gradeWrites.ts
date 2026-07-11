@@ -22,11 +22,11 @@ export async function upsertGradeRecord(params: UpsertGradeParams): Promise<void
   const userId = userData.user?.id;
   if (!userId) throw new Error("Not authenticated");
 
-  // grade_records denormalizes class_id/quarter/semester from the assignment
-  // for fast querying, so resolve them once up front.
+  // grade_records denormalizes class_id/semester from the assignment
+  // for fast querying, so resolve it once up front.
   const { data: assignment, error: assignmentError } = await supabase
     .from("assignments")
-    .select("class_id, quarter, semester")
+    .select("class_id, semester")
     .eq("id", params.assignmentId)
     .single();
   if (assignmentError) throw assignmentError;
@@ -44,7 +44,6 @@ export async function upsertGradeRecord(params: UpsertGradeParams): Promise<void
       feedback: params.feedback ?? null,
       confidence_vals: params.confidenceVals ?? null,
       source: params.source ?? "manual",
-      quarter: assignment.quarter,
       semester: assignment.semester,
       user_id: userId,
     },

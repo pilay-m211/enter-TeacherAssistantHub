@@ -66,7 +66,7 @@ export function useOcrScan<M extends OcrMode>(mode: M) {
   const scan = useCallback(
     async (
       file: File,
-      extra?: { question_count?: number; max_score_per_q?: number; hint_quarter?: number }
+      extra?: { question_count?: number; max_score_per_q?: number; hint_term?: number }
     ): Promise<OcrScanOutcome<M> | null> => {
       setIsScanning(true);
       setError(null);

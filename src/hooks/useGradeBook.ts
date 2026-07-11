@@ -6,29 +6,31 @@ import type { AssignmentRow } from "@/hooks/useAssignments";
 import type { GradeRow } from "@/hooks/useGrades";
 import {
   COMPONENT_WEIGHTS_BY_SUBJECT_GROUP,
+  TERMS,
   computeComponentPercentages,
   computeInitialGrade,
-  computeQuarterlyGrade,
-  computeSemesterFinalGrade,
+  computeTermGrade,
+  computeYearFinalGrade,
   remarksFor,
   type AssignmentComponent,
   type SubjectGroup,
+  type Term,
 } from "@/lib/gradingConfig";
 
-export interface QuarterStudentGrade {
+export interface TermStudentGrade {
   studentId: string;
   studentName: string;
   writtenWorkPct: number | null;
   performanceTaskPct: number | null;
   quarterlyAssessmentPct: number | null;
   initialGrade: number | null;
-  quarterlyGrade: number | null;
+  termGrade: number | null;
 }
 
 export interface StudentYearSummary {
   studentId: string;
   studentName: string;
-  quarterlyGrades: Array<number | null>; // index 0 = Q1 ... index 3 = Q4
+  termGrades: Array<number | null>; // index 0 = Term 1 ... index 2 = Term 3
   finalGrade: number | null;
   remarks: "PASSED" | "FAILED" | "INCOMPLETE";
 }
@@ -36,8 +38,8 @@ export interface StudentYearSummary {
 export interface GradeBookData {
   classItem: ClassRow | null;
   students: StudentRow[];
-  assignmentsByQuarter: Record<number, AssignmentRow[]>;
-  quarterGrades: Record<number, QuarterStudentGrade[]>;
+  assignmentsByTerm: Record<Term, AssignmentRow[]>;
+  termGrades: Record<Term, TermStudentGrade[]>;
   yearSummary: StudentYearSummary[];
 }
 
@@ -111,10 +113,10 @@ export function useGradeBook(classId: string | undefined) {
     const subjectGroup = (classItem?.subject_group as SubjectGroup) ?? "core";
     const weights = COMPONENT_WEIGHTS_BY_SUBJECT_GROUP[subjectGroup];
 
-    const assignmentsByQuarter: Record<number, AssignmentRow[]> = { 1: [], 2: [], 3: [], 4: [] };
+    const assignmentsByTerm: Record<Term, AssignmentRow[]> = { 1: [], 2: [], 3: [] };
     for (const assignment of assignments) {
-      const quarter = assignment.quarter ?? 1;
-      assignmentsByQuarter[quarter]?.push(assignment);
+      const term = (assignment.semester as Term) ?? 1;
+      assignmentsByTerm[term]?.push(assignment);
     }
 
     const gradeByAssignmentAndStudent = new Map<string, GradeRow>();
@@ -122,17 +124,17 @@ export function useGradeBook(classId: string | undefined) {
       gradeByAssignmentAndStudent.set(`${grade.assignment_id}:${grade.student_id}`, grade);
     }
 
-    const quarterGrades: Record<number, QuarterStudentGrade[]> = { 1: [], 2: [], 3: [], 4: [] };
-    const quarterlyByStudent = new Map<string, Array<number | null>>();
+    const termGrades: Record<Term, TermStudentGrade[]> = { 1: [], 2: [], 3: [] };
+    const termsByStudent = new Map<string, Array<number | null>>();
     for (const student of students) {
-      quarterlyByStudent.set(student.id, [null, null, null, null]);
+      termsByStudent.set(student.id, [null, null, null]);
     }
 
-    for (let quarter = 1; quarter <= 4; quarter++) {
-      const quarterAssignments = assignmentsByQuarter[quarter] ?? [];
+    for (const term of TERMS) {
+      const termAssignments = assignmentsByTerm[term] ?? [];
 
       for (const student of students) {
-        const entries = quarterAssignments.map((assignment) => {
+        const entries = termAssignments.map((assignment) => {
           const grade = gradeByAssignmentAndStudent.get(`${assignment.id}:${student.id}`);
           const rawTotal = grade?.scores ? scoreTotal(grade.scores) : grade?.score_numeric ?? 0;
           const maxTotal = (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1);
@@ -145,36 +147,36 @@ export function useGradeBook(classId: string | undefined) {
 
         const pcts = computeComponentPercentages(entries);
         const initialGrade = computeInitialGrade(pcts, weights);
-        const quarterlyGrade = initialGrade !== null ? computeQuarterlyGrade(initialGrade) : null;
+        const termGrade = initialGrade !== null ? computeTermGrade(initialGrade) : null;
 
-        quarterGrades[quarter].push({
+        termGrades[term].push({
           studentId: student.id,
           studentName: student.name,
           writtenWorkPct: pcts.writtenOralPct,
           performanceTaskPct: pcts.performanceTaskPct,
           quarterlyAssessmentPct: pcts.examinationPct,
           initialGrade,
-          quarterlyGrade,
+          termGrade,
         });
 
-        const arr = quarterlyByStudent.get(student.id);
-        if (arr) arr[quarter - 1] = quarterlyGrade;
+        const arr = termsByStudent.get(student.id);
+        if (arr) arr[term - 1] = termGrade;
       }
     }
 
     const yearSummary: StudentYearSummary[] = students.map((student) => {
-      const quarterlyGradesArr = quarterlyByStudent.get(student.id) ?? [null, null, null, null];
-      const finalGrade = computeSemesterFinalGrade(quarterlyGradesArr);
+      const termGradesArr = termsByStudent.get(student.id) ?? [null, null, null];
+      const finalGrade = computeYearFinalGrade(termGradesArr);
       return {
         studentId: student.id,
         studentName: student.name,
-        quarterlyGrades: quarterlyGradesArr,
+        termGrades: termGradesArr,
         finalGrade,
         remarks: remarksFor(finalGrade),
       };
     });
 
-    return { classItem, students, assignmentsByQuarter, quarterGrades, yearSummary };
+    return { classItem, students, assignmentsByTerm, termGrades, yearSummary };
   }, [classItem, students, assignments, grades]);
 
   return { ...data, assignments, grades, loading, refresh };

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { StudentRow } from "@/hooks/useStudents";
 import { summarizeAttendance, type AttendanceStatus, type AttendanceSummary } from "@/lib/attendanceSummary";
+import type { Term } from "@/lib/gradingConfig";
 
 export interface AttendanceDraftEntry {
   status: AttendanceStatus;
@@ -12,8 +13,8 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function quarterForDate(): number {
-  // Best-effort default; teacher can override via the quarter selector.
+function termForDate(): Term {
+  // Best-effort default; teacher can override via the term selector.
   return 1;
 }
 
@@ -21,12 +22,12 @@ function quarterForDate(): number {
  * Powers the fast, class-wide daily attendance screen: loads the roster and
  * any existing attendance for a given date, defaults every student without a
  * saved record to "present", and saves one row per active student on commit
- * (upsert against the same student_id+folder_id+date unique key the
+ * (upsert against the same student_id+class_id+attendance_date unique key the
  * per-student flow already uses — no duplicate rows, no parallel model).
  */
 export function useClassAttendance(classId: string | undefined, initialDate?: string) {
   const [date, setDate] = useState(initialDate ?? todayIso());
-  const [quarter, setQuarter] = useState(quarterForDate());
+  const [semester, setSemester] = useState<Term>(termForDate());
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [draft, setDraft] = useState<Record<string, AttendanceDraftEntry>>({});
   const [loading, setLoading] = useState(true);
@@ -62,7 +63,7 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
     }
 
     if (existingRecords.length > 0) {
-      setQuarter(existingRecords[0].quarter);
+      setSemester(existingRecords[0].semester as Term);
     }
 
     setStudents(activeStudents);
@@ -116,7 +117,7 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
           class_id: classId,
           user_id: userId,
           attendance_date: date,
-          quarter,
+          semester,
           status: entry.status,
           reason_note: entry.note.trim() || null,
           updated_at: new Date().toISOString(),
@@ -134,13 +135,13 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
     } finally {
       setSaving(false);
     }
-  }, [classId, date, quarter, students, draft, loadForDate]);
+  }, [classId, date, semester, students, draft, loadForDate]);
 
   return {
     date,
     setDate,
-    quarter,
-    setQuarter,
+    semester,
+    setSemester,
     students,
     draft,
     setStatus,

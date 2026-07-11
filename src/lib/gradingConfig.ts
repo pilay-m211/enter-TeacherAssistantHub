@@ -8,6 +8,14 @@
 // Grading System, and Awards and Recognition") because the official numeric
 // tables for that order were not available at implementation time.
 //
+// GRADING CALENDAR: DO 15, s. 2026 replaces the old 4-quarter calendar with a
+// 3-term ("Trisemester" / Trisem) school year, applied to every grade level
+// (elementary, JHS, and SHS alike) — not just Senior High. Every grading
+// period in this app (classes, assignments, attendance, grade records) uses
+// a single `semester` field constrained to 1 | 2 | 3, representing Term 1,
+// Term 2, and Term 3 of the school year. There is no separate "quarter"
+// concept anymore.
+//
 // When the actual DO 15, s. 2026 figures are provided, update ONLY this file:
 // - COMPONENT_WEIGHTS_BY_SUBJECT_GROUP
 // - TRANSMUTATION_TABLE (or flip GRADING_MODE to "zero_based" if DO 15 removes
@@ -24,6 +32,16 @@ export const GRADING_MODE: GradingMode = "transmuted";
 
 /** PLACEHOLDER — confirm against DO 15, s. 2026 text. */
 export const PASSING_GRADE = 75;
+
+/** The 3 Trisemester terms every class, assignment, and grade record is tagged with. */
+export const TERMS = [1, 2, 3] as const;
+export type Term = (typeof TERMS)[number];
+
+export const TERM_LABELS: Record<Term, string> = {
+  1: "Term 1",
+  2: "Term 2",
+  3: "Term 3",
+};
 
 export type SubjectGroup = "core" | "mapeh_tle" | "shs_core" | "shs_track";
 export type AssignmentComponent = "written_oral" | "performance_task" | "examination";
@@ -120,8 +138,8 @@ function transmute(initialGrade: number): number {
   return 60;
 }
 
-/** Initial Grade -> Quarterly Grade, per the active GRADING_MODE. */
-export function computeQuarterlyGrade(initialGrade: number): number {
+/** Initial Grade -> Term Grade, per the active GRADING_MODE. */
+export function computeTermGrade(initialGrade: number): number {
   if (GRADING_MODE === "zero_based") {
     return Math.round(Math.max(0, Math.min(100, initialGrade)));
   }
@@ -181,26 +199,18 @@ export function computeInitialGrade(pcts: ComponentPercentages, weights: Compone
 }
 
 /**
- * Semester Final Grade = average of the Quarterly Grades within that semester.
- * K-12 basic ed (semester field is a no-op / always 1): Semester 1 = Q1+Q2, Semester 2 = Q3+Q4.
- * SHS Trisem: each semester (1, 2, 3) maps to whichever quarters are tagged with it —
- * the caller passes only the quarterly grades belonging to that semester.
+ * Final Grade for the school year = average of the 3 Trisemester Term Grades
+ * (Term 1, Term 2, Term 3). Terms with no data are excluded rather than
+ * counted as zero.
  */
-export function computeSemesterFinalGrade(quarterlyGrades: Array<number | null>): number | null {
-  const available = quarterlyGrades.filter((g): g is number => g !== null);
+export function computeYearFinalGrade(termGrades: Array<number | null>): number | null {
+  const available = termGrades.filter((g): g is number => g !== null);
   if (available.length === 0) return null;
   return Math.round(available.reduce((sum, g) => sum + g, 0) / available.length);
 }
 
-/** General Average = average of Semester Final Grades across the full school year. */
-export function computeGeneralAverage(semesterFinalGrades: Array<number | null>): number | null {
-  const available = semesterFinalGrades.filter((g): g is number => g !== null);
-  if (available.length === 0) return null;
-  return Math.round((available.reduce((sum, g) => sum + g, 0) / available.length) * 100) / 100;
-}
-
-/** Backward-compatible alias used by existing per-class-year (K-12 basic ed) call sites. */
-export const computeFinalGrade = computeSemesterFinalGrade;
+/** Backward-compatible alias for the year-level average across all terms. */
+export const computeFinalGrade = computeYearFinalGrade;
 
 export function remarksFor(finalGrade: number | null): "PASSED" | "FAILED" | "INCOMPLETE" {
   if (finalGrade === null) return "INCOMPLETE";

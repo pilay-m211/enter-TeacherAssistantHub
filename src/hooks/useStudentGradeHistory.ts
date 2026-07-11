@@ -5,20 +5,22 @@ import type { AssignmentRow } from "@/hooks/useAssignments";
 import type { GradeRow } from "@/hooks/useGrades";
 import {
   COMPONENT_WEIGHTS_BY_SUBJECT_GROUP,
+  TERMS,
   computeComponentPercentages,
   computeInitialGrade,
-  computeQuarterlyGrade,
-  computeSemesterFinalGrade,
+  computeTermGrade,
+  computeYearFinalGrade,
   remarksFor,
   type AssignmentComponent,
   type SubjectGroup,
+  type Term,
 } from "@/lib/gradingConfig";
 
 export interface AssignmentGradeDetail {
   assignmentId: string;
   name: string;
   component: AssignmentComponent;
-  quarter: number;
+  semester: Term;
   rawScore: number;
   maxScore: number;
   source: "manual" | "ocr";
@@ -26,13 +28,13 @@ export interface AssignmentGradeDetail {
   updatedAt: string | null;
 }
 
-export interface QuarterGradeSummary {
-  quarter: number;
+export interface TermGradeSummary {
+  semester: Term;
   writtenWorkPct: number | null;
   performanceTaskPct: number | null;
   quarterlyAssessmentPct: number | null;
   initialGrade: number | null;
-  quarterlyGrade: number | null;
+  termGrade: number | null;
   assignments: AssignmentGradeDetail[];
 }
 
@@ -86,18 +88,18 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
     };
   }, [studentId, classId]);
 
-  const quarters = useMemo<QuarterGradeSummary[]>(() => {
+  const terms = useMemo<TermGradeSummary[]>(() => {
     const subjectGroup = (classItem?.subject_group as SubjectGroup) ?? "core";
     const weights = COMPONENT_WEIGHTS_BY_SUBJECT_GROUP[subjectGroup];
 
     const gradeByAssignment = new Map<string, GradeRow>();
     for (const grade of grades) gradeByAssignment.set(grade.assignment_id, grade);
 
-    const result: QuarterGradeSummary[] = [];
-    for (let quarter = 1; quarter <= 4; quarter++) {
-      const quarterAssignments = assignments.filter((a) => (a.quarter ?? 1) === quarter);
+    const result: TermGradeSummary[] = [];
+    for (const term of TERMS) {
+      const termAssignments = assignments.filter((a) => ((a.semester as Term) ?? 1) === term);
 
-      const details: AssignmentGradeDetail[] = quarterAssignments.map((assignment) => {
+      const details: AssignmentGradeDetail[] = termAssignments.map((assignment) => {
         const grade = gradeByAssignment.get(assignment.id);
         const rawScore = grade?.scores ? scoreTotal(grade.scores) : grade?.score_numeric ?? 0;
         const maxScore = (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1);
@@ -105,7 +107,7 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
           assignmentId: assignment.id,
           name: assignment.title,
           component: (assignment.component as AssignmentComponent) ?? "written_oral",
-          quarter,
+          semester: term,
           rawScore: rawScore ?? 0,
           maxScore,
           source: (grade?.source as "manual" | "ocr") ?? "manual",
@@ -117,15 +119,15 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
       const entries = details.map((d) => ({ component: d.component, scoreTotal: d.rawScore, maxTotal: d.maxScore }));
       const pcts = computeComponentPercentages(entries);
       const initialGrade = computeInitialGrade(pcts, weights);
-      const quarterlyGrade = initialGrade !== null ? computeQuarterlyGrade(initialGrade) : null;
+      const termGrade = initialGrade !== null ? computeTermGrade(initialGrade) : null;
 
       result.push({
-        quarter,
+        semester: term,
         writtenWorkPct: pcts.writtenOralPct,
         performanceTaskPct: pcts.performanceTaskPct,
         quarterlyAssessmentPct: pcts.examinationPct,
         initialGrade,
-        quarterlyGrade,
+        termGrade,
         assignments: details,
       });
     }
@@ -133,10 +135,10 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
   }, [classItem, assignments, grades]);
 
   const finalGrade = useMemo(
-    () => computeSemesterFinalGrade(quarters.map((q) => q.quarterlyGrade)),
-    [quarters]
+    () => computeYearFinalGrade(terms.map((t) => t.termGrade)),
+    [terms]
   );
   const remarks = useMemo(() => remarksFor(finalGrade), [finalGrade]);
 
-  return { classItem, quarters, finalGrade, remarks, loading };
+  return { classItem, terms, finalGrade, remarks, loading };
 }

@@ -19,6 +19,7 @@ import { AttendanceReasonInput } from "@/components/attendance/AttendanceReasonI
 import { ClassAttendanceSummaryCard } from "@/components/attendance/ClassAttendanceSummaryCard";
 import { SearchInput } from "@/components/search/SearchInput";
 import { useToast } from "@/hooks/use-toast";
+import { TERMS, TERM_LABELS, type Term } from "@/lib/gradingConfig";
 
 const ClassAttendance = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -26,8 +27,8 @@ const ClassAttendance = () => {
   const {
     date,
     setDate,
-    quarter,
-    setQuarter,
+    semester,
+    setSemester,
     students,
     draft,
     setStatus,
@@ -94,15 +95,15 @@ const ClassAttendance = () => {
           />
         </div>
         <div className="space-y-2">
-          <Label>Quarter</Label>
-          <Select value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))}>
+          <Label>Term</Label>
+          <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as Term)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[1, 2, 3, 4].map((q) => (
-                <SelectItem key={q} value={String(q)}>
-                  Quarter {q}
+              {TERMS.map((t) => (
+                <SelectItem key={t} value={String(t)}>
+                  {TERM_LABELS[t]}
                 </SelectItem>
               ))}
             </SelectContent>

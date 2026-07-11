@@ -4,14 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AssignmentSettingsDialog } from "@/components/teacher/AssignmentSettingsDialog";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
+import { COMPONENT_LABELS, TERM_LABELS, type AssignmentComponent, type Term } from "@/lib/gradingConfig";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 
 interface AssignmentListProps {
   classId: string;
   assignments: AssignmentRow[];
   onDelete: (id: string) => void;
-  onUpdate: (id: string, updates: { component: AssignmentComponent; quarter: number }) => Promise<void>;
+  onUpdate: (id: string, updates: { component: AssignmentComponent; semester: Term }) => Promise<void>;
 }
 
 export function AssignmentList({ classId, assignments, onDelete, onUpdate }: AssignmentListProps) {
@@ -39,7 +39,7 @@ export function AssignmentList({ classId, assignments, onDelete, onUpdate }: Ass
                   {assignment.assessment_type === "rubric" ? "Rubric" : "Simple"}
                 </Badge>
                 <Badge variant="outline">{COMPONENT_LABELS[component]}</Badge>
-                <Badge variant="outline">Q{assignment.quarter ?? 1}</Badge>
+                <Badge variant="outline">{TERM_LABELS[(assignment.semester as Term) ?? 1]}</Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {assignment.assessment_type === "rubric"

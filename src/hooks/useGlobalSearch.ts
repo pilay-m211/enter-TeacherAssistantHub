@@ -24,7 +24,7 @@ export interface AssignmentSearchResult {
   name: string;
   classId: string;
   className: string;
-  quarter: number;
+  semester: number;
 }
 
 export interface NoteSearchResult {
@@ -82,7 +82,7 @@ export function useGlobalSearch(query: string, options?: { includeArchived?: boo
         supabase.from("classes").select("id, name, subject_group").ilike("name", pattern).limit(RESULT_CAP),
         supabase
           .from("assignments")
-          .select("id, title, quarter, class_id, classes(name)")
+          .select("id, title, semester, class_id, classes(name)")
           .ilike("title", pattern)
           .limit(RESULT_CAP),
         supabase
@@ -119,7 +119,7 @@ export function useGlobalSearch(query: string, options?: { includeArchived?: boo
           name: row.title,
           classId: row.class_id as string,
           className: cls?.name ?? "Unknown class",
-          quarter: row.quarter,
+          semester: row.semester,
         };
       });
 

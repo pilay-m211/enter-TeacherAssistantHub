@@ -20,7 +20,7 @@ export interface ClassAttendanceSummaryData {
  * attendance_records rows the daily marking screen writes and the student
  * profile's per-student tab reads; no separate aggregation table.
  */
-export function useClassAttendanceSummary(classId: string | undefined, quarter?: number) {
+export function useClassAttendanceSummary(classId: string | undefined, semester?: 1 | 2 | 3) {
   const [records, setRecords] = useState<AttendanceRow[]>([]);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export function useClassAttendanceSummary(classId: string | undefined, quarter?:
     (async () => {
       setLoading(true);
       let query = supabase.from("attendance_records").select("*").eq("class_id", classId);
-      if (quarter) query = query.eq("quarter", quarter);
+      if (semester) query = query.eq("semester", semester);
 
       const [attendanceRes, rosterRes] = await Promise.all([
         query,
@@ -56,7 +56,7 @@ export function useClassAttendanceSummary(classId: string | undefined, quarter?:
     return () => {
       active = false;
     };
-  }, [classId, quarter]);
+  }, [classId, semester]);
 
   const data = useMemo<ClassAttendanceSummaryData>(() => {
     const overall = summarizeAttendance(records);

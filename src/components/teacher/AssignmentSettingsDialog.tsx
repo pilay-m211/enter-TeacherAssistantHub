@@ -19,29 +19,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
+import { COMPONENT_LABELS, TERMS, TERM_LABELS, type AssignmentComponent, type Term } from "@/lib/gradingConfig";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 
 interface AssignmentSettingsDialogProps {
   assignment: AssignmentRow;
-  onSave: (updates: { component: AssignmentComponent; quarter: number }) => Promise<void>;
+  onSave: (updates: { component: AssignmentComponent; semester: Term }) => Promise<void>;
 }
-
-const QUARTERS = [1, 2, 3, 4];
 
 export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const [component, setComponent] = useState<AssignmentComponent>(
     (assignment.component as AssignmentComponent) ?? "written_oral"
   );
-  const [quarter, setQuarter] = useState<number>(assignment.quarter ?? 1);
+  const [semester, setSemester] = useState<Term>((assignment.semester as Term) ?? 1);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
       setComponent((assignment.component as AssignmentComponent) ?? "written_oral");
-      setQuarter(assignment.quarter ?? 1);
+      setSemester((assignment.semester as Term) ?? 1);
     }
     setOpen(next);
   };
@@ -49,7 +47,7 @@ export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSetti
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onSave({ component, quarter });
+      await onSave({ component, semester });
       setOpen(false);
     } catch (err) {
       toast({
@@ -78,7 +76,7 @@ export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSetti
         <DialogHeader>
           <DialogTitle>Grading settings — {assignment.title}</DialogTitle>
           <DialogDescription>
-            Tag this assignment's DepEd component and quarter so it's included correctly in the Grade Book.
+            Tag this assignment's DepEd component and term so it's included correctly in the Grade Book.
           </DialogDescription>
         </DialogHeader>
 
@@ -100,15 +98,15 @@ export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSetti
           </div>
 
           <div className="space-y-2">
-            <Label>Quarter</Label>
-            <Select value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))}>
+            <Label>Term</Label>
+            <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as Term)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {QUARTERS.map((q) => (
-                  <SelectItem key={q} value={String(q)}>
-                    Quarter {q}
+                {TERMS.map((t) => (
+                  <SelectItem key={t} value={String(t)}>
+                    {TERM_LABELS[t]}
                   </SelectItem>
                 ))}
               </SelectContent>

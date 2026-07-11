@@ -19,7 +19,7 @@ interface OcrRequestBody {
   image_url: string;
   question_count?: number;
   max_score_per_q?: number;
-  hint_quarter?: number;
+  hint_term?: number;
 }
 
 function promptForMode(mode: Mode, body: OcrRequestBody): string {
@@ -50,9 +50,9 @@ If a score is illegible, skip that row entirely rather than guessing.`;
   }
 
   // class_record_table
-  const quarterHint = body.hint_quarter ? ` This sheet covers Quarter ${body.hint_quarter}.` : "";
+  const termHint = body.hint_term ? ` This sheet covers Term ${body.hint_term}.` : "";
   return `You are reading a photo or scan of a printed class record / grade sheet table (like a DepEd E-Class Record page).
-The table has rows of student names and multiple columns of scores (e.g. quizzes, performance tasks, exams).${quarterHint}
+The table has rows of student names and multiple columns of scores (e.g. quizzes, performance tasks, exams).${termHint}
 Read the column headers exactly as printed (e.g. "Quiz 1", "PT 1", "Unit Test"). Read every student row.
 For each student, extract their name and their score in each column, aligned by column position.
 If a cell is blank, illegible, or crossed out, use null for that cell rather than guessing.

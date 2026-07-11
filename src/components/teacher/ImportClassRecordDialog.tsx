@@ -24,6 +24,7 @@ import { OcrColumnMappingCard } from "@/components/teacher/OcrColumnMappingCard"
 import { OcrTableReviewGrid } from "@/components/teacher/OcrTableReviewGrid";
 import type { StudentRow } from "@/hooks/useStudents";
 import type { AssignmentRow, CreateAssignmentInput } from "@/hooks/useAssignments";
+import { TERMS, TERM_LABELS, type Term } from "@/lib/gradingConfig";
 
 interface ImportClassRecordDialogProps {
   classId: string;
@@ -34,8 +35,6 @@ interface ImportClassRecordDialogProps {
   onCommitted: () => void;
 }
 
-const QUARTERS = [1, 2, 3, 4];
-
 export function ImportClassRecordDialog({
   classId,
   students,
@@ -45,7 +44,7 @@ export function ImportClassRecordDialog({
   onCommitted,
 }: ImportClassRecordDialogProps) {
   const [open, setOpen] = useState(false);
-  const [quarter, setQuarter] = useState(1);
+  const [semester, setSemester] = useState<Term>(1);
   const [committing, setCommitting] = useState(false);
   const { toast } = useToast();
 
@@ -68,7 +67,7 @@ export function ImportClassRecordDialog({
     e.target.value = "";
     if (!file) return;
 
-    const ok = await runScan(file, quarter, students);
+    const ok = await runScan(file, semester, students);
     if (!ok) {
       toast({
         title: "Could not read the table",
@@ -111,7 +110,7 @@ export function ImportClassRecordDialog({
     try {
       const rowsCommitted = await commit({
         classId,
-        quarter,
+        semester,
         students,
         assignments,
         addStudents,
@@ -155,15 +154,15 @@ export function ImportClassRecordDialog({
         {!hasResult ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Quarter this sheet covers</Label>
-              <Select value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))}>
+              <Label>Term this sheet covers</Label>
+              <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as Term)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {QUARTERS.map((q) => (
-                    <SelectItem key={q} value={String(q)}>
-                      Quarter {q}
+                  {TERMS.map((t) => (
+                    <SelectItem key={t} value={String(t)}>
+                      {TERM_LABELS[t]}
                     </SelectItem>
                   ))}
                 </SelectContent>

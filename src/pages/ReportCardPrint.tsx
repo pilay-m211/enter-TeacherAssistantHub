@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGradeBook } from "@/hooks/useGradeBook";
-import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/gradingConfig";
+import { SUBJECT_GROUP_LABELS, TERMS, TERM_LABELS, type SubjectGroup } from "@/lib/gradingConfig";
 
 const ReportCardPrint = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -77,11 +77,10 @@ const ReportCardPrint = () => {
               <table className="mt-6 w-full border-collapse text-sm">
                 <thead>
                   <tr className="border border-neutral-400 bg-neutral-100">
-                    <th className="border border-neutral-400 px-3 py-2 text-left">Quarter</th>
-                    <th className="border border-neutral-400 px-3 py-2 text-left">Q1</th>
-                    <th className="border border-neutral-400 px-3 py-2 text-left">Q2</th>
-                    <th className="border border-neutral-400 px-3 py-2 text-left">Q3</th>
-                    <th className="border border-neutral-400 px-3 py-2 text-left">Q4</th>
+                    <th className="border border-neutral-400 px-3 py-2 text-left">Term</th>
+                    {TERMS.map((t) => (
+                      <th key={t} className="border border-neutral-400 px-3 py-2 text-left">{TERM_LABELS[t]}</th>
+                    ))}
                     <th className="border border-neutral-400 px-3 py-2 text-left">Final Grade</th>
                     <th className="border border-neutral-400 px-3 py-2 text-left">Remarks</th>
                   </tr>
@@ -89,7 +88,7 @@ const ReportCardPrint = () => {
                 <tbody>
                   <tr>
                     <td className="border border-neutral-400 px-3 py-2 font-medium">{className}</td>
-                    {student.quarterlyGrades.map((grade, index) => (
+                    {student.termGrades.map((grade, index) => (
                       <td key={index} className="border border-neutral-400 px-3 py-2 text-center">
                         {grade ?? "—"}
                       </td>

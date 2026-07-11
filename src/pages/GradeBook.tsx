@@ -11,10 +11,8 @@ import { useStudents } from "@/hooks/useStudents";
 import { useAssignments } from "@/hooks/useAssignments";
 import { ImportClassRecordDialog } from "@/components/teacher/ImportClassRecordDialog";
 import { SearchInput } from "@/components/search/SearchInput";
-import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, type AssignmentComponent, type SubjectGroup } from "@/lib/gradingConfig";
-import { exportEClassRecord, exportSummaryOfQuarterlyGrades, exportRawBackupCsv } from "@/lib/gradeBookExports";
-
-const QUARTERS = [1, 2, 3, 4];
+import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, TERMS, TERM_LABELS, type AssignmentComponent, type SubjectGroup, type Term } from "@/lib/gradingConfig";
+import { exportEClassRecord, exportSummaryOfTermGrades, exportRawBackupCsv } from "@/lib/gradeBookExports";
 
 function formatPct(value: number | null) {
   return value !== null ? `${value.toFixed(1)}%` : "—";
@@ -23,11 +21,11 @@ function formatPct(value: number | null) {
 const GradeBook = () => {
   const { classId } = useParams<{ classId: string }>();
   const gradeBook = useGradeBook(classId);
-  const { classItem, students, assignmentsByQuarter, quarterGrades, yearSummary, assignments, grades, loading, refresh } =
+  const { classItem, students, assignmentsByTerm, termGrades, yearSummary, assignments, grades, loading, refresh } =
     gradeBook;
   const { addStudents } = useStudents(classId);
   const { createAssignment } = useAssignments(classId);
-  const [activeQuarter, setActiveQuarter] = useState("1");
+  const [activeTerm, setActiveTerm] = useState("1");
   const [studentSearch, setStudentSearch] = useState("");
 
   const matchesSearch = (name: string) => {
@@ -36,12 +34,12 @@ const GradeBook = () => {
   };
 
   const assignmentMeta = useMemo(() => {
-    const map = new Map<string, { name: string; component: AssignmentComponent; quarter: number; maxTotal: number }>();
+    const map = new Map<string, { name: string; component: AssignmentComponent; semester: Term; maxTotal: number }>();
     for (const assignment of assignments) {
       map.set(assignment.id, {
         name: assignment.title,
         component: (assignment.component as AssignmentComponent) ?? "written_oral",
-        quarter: assignment.quarter ?? 1,
+        semester: (assignment.semester as Term) ?? 1,
         maxTotal: (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1),
       });
     }
@@ -98,7 +96,7 @@ const GradeBook = () => {
             variant="glass"
             size="sm"
             className="gap-2"
-            onClick={() => exportSummaryOfQuarterlyGrades(gradeBook, className)}
+            onClick={() => exportSummaryOfTermGrades(gradeBook, className)}
           >
             <FileSpreadsheet className="h-4 w-4" />
             Summary of Grades (.xlsx)
@@ -134,25 +132,25 @@ const GradeBook = () => {
             className="mt-6 max-w-sm"
           />
 
-          <Tabs value={activeQuarter} onValueChange={setActiveQuarter} className="mt-6">
-            <TabsList className="grid w-full grid-cols-4 sm:w-auto">
-              {QUARTERS.map((q) => (
-                <TabsTrigger key={q} value={String(q)}>
-                  Quarter {q}
+          <Tabs value={activeTerm} onValueChange={setActiveTerm} className="mt-6">
+            <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+              {TERMS.map((t) => (
+                <TabsTrigger key={t} value={String(t)}>
+                  {TERM_LABELS[t]}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {QUARTERS.map((quarter) => {
-              const rows = (quarterGrades[quarter] ?? []).filter((row) => matchesSearch(row.studentName));
-              const quarterAssignments = assignmentsByQuarter[quarter] ?? [];
+            {TERMS.map((term) => {
+              const rows = (termGrades[term] ?? []).filter((row) => matchesSearch(row.studentName));
+              const termAssignments = assignmentsByTerm[term] ?? [];
 
               return (
-                <TabsContent key={quarter} value={String(quarter)} className="mt-4">
-                  {quarterAssignments.length === 0 ? (
+                <TabsContent key={term} value={String(term)} className="mt-4">
+                  {termAssignments.length === 0 ? (
                     <Card variant="glass" className="flex flex-col items-center justify-center py-12 text-center">
                       <p className="text-sm text-muted-foreground">
-                        No assignments tagged to Quarter {quarter} yet. Tag assignments via their grading settings.
+                        No assignments tagged to {TERM_LABELS[term]} yet. Tag assignments via their grading settings.
                       </p>
                     </Card>
                   ) : rows.length === 0 ? (
@@ -162,7 +160,7 @@ const GradeBook = () => {
                   ) : (
                     <Card variant="glass" className="overflow-hidden">
                       <div className="flex flex-wrap gap-1.5 border-b border-border/50 px-4 py-3">
-                        {quarterAssignments.map((a) => (
+                        {termAssignments.map((a) => (
                           <Badge key={a.id} variant="outline" className="text-xs">
                             {a.title} · {COMPONENT_LABELS[(a.component as AssignmentComponent) ?? "written_oral"]}
                           </Badge>
@@ -176,7 +174,7 @@ const GradeBook = () => {
                             <TableHead className="text-right">PT %</TableHead>
                             <TableHead className="text-right">QA %</TableHead>
                             <TableHead className="text-right">Initial Grade</TableHead>
-                            <TableHead className="text-right">Quarterly Grade</TableHead>
+                            <TableHead className="text-right">Term Grade</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -203,9 +201,9 @@ const GradeBook = () => {
                                 {row.initialGrade !== null ? row.initialGrade.toFixed(2) : "—"}
                               </TableCell>
                               <TableCell className="text-right">
-                                {row.quarterlyGrade !== null ? (
-                                  <Badge variant={row.quarterlyGrade >= 75 ? "verified" : "destructive"}>
-                                    {row.quarterlyGrade}
+                                {row.termGrade !== null ? (
+                                  <Badge variant={row.termGrade >= 75 ? "verified" : "destructive"}>
+                                    {row.termGrade}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted-foreground">—</span>
@@ -223,19 +221,18 @@ const GradeBook = () => {
           </Tabs>
 
           <div className="mt-10">
-            <h2 className="text-lg font-semibold">Summary of Quarterly Grades</h2>
+            <h2 className="text-lg font-semibold">Summary of Term Grades</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              For the class adviser — consolidated quarterly and final grades.
+              For the class adviser — consolidated term and final grades.
             </p>
             <Card variant="glass" className="mt-4 overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead>Learner's Name</TableHead>
-                    <TableHead className="text-right">Q1</TableHead>
-                    <TableHead className="text-right">Q2</TableHead>
-                    <TableHead className="text-right">Q3</TableHead>
-                    <TableHead className="text-right">Q4</TableHead>
+                    {TERMS.map((t) => (
+                      <TableHead key={t} className="text-right">{TERM_LABELS[t]}</TableHead>
+                    ))}
                     <TableHead className="text-right">Final Grade</TableHead>
                     <TableHead className="text-right">Remarks</TableHead>
                   </TableRow>
@@ -251,7 +248,7 @@ const GradeBook = () => {
                           {student.studentName}
                         </Link>
                       </TableCell>
-                      {student.quarterlyGrades.map((grade, index) => (
+                      {student.termGrades.map((grade, index) => (
                         <TableCell key={index} className="text-right text-muted-foreground">
                           {grade ?? "—"}
                         </TableCell>

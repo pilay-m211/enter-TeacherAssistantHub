@@ -4,46 +4,46 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { COMPONENT_LABELS } from "@/lib/gradingConfig";
-import type { QuarterGradeSummary } from "@/hooks/useStudentGradeHistory";
+import { COMPONENT_LABELS, TERM_LABELS } from "@/lib/gradingConfig";
+import type { TermGradeSummary } from "@/hooks/useStudentGradeHistory";
 
 interface GradeHistoryTabProps {
   classId: string;
-  quarters: QuarterGradeSummary[];
+  terms: TermGradeSummary[];
 }
 
 function formatPct(value: number | null) {
   return value !== null ? `${value.toFixed(1)}%` : "—";
 }
 
-export function GradeHistoryTab({ classId, quarters }: GradeHistoryTabProps) {
+export function GradeHistoryTab({ classId, terms }: GradeHistoryTabProps) {
   return (
     <Tabs defaultValue="1">
-      <TabsList className="grid w-full grid-cols-4 sm:w-auto">
-        {quarters.map((q) => (
-          <TabsTrigger key={q.quarter} value={String(q.quarter)}>
-            Quarter {q.quarter}
+      <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+        {terms.map((t) => (
+          <TabsTrigger key={t.semester} value={String(t.semester)}>
+            {TERM_LABELS[t.semester]}
           </TabsTrigger>
         ))}
       </TabsList>
 
-      {quarters.map((q) => (
-        <TabsContent key={q.quarter} value={String(q.quarter)} className="mt-4 space-y-4">
+      {terms.map((t) => (
+        <TabsContent key={t.semester} value={String(t.semester)} className="mt-4 space-y-4">
           <Card variant="glass" className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-5">
-            <SummaryStat label="WW %" value={formatPct(q.writtenWorkPct)} />
-            <SummaryStat label="PT %" value={formatPct(q.performanceTaskPct)} />
-            <SummaryStat label="QA %" value={formatPct(q.quarterlyAssessmentPct)} />
-            <SummaryStat label="Initial Grade" value={q.initialGrade !== null ? q.initialGrade.toFixed(2) : "—"} />
+            <SummaryStat label="WW %" value={formatPct(t.writtenWorkPct)} />
+            <SummaryStat label="PT %" value={formatPct(t.performanceTaskPct)} />
+            <SummaryStat label="QA %" value={formatPct(t.quarterlyAssessmentPct)} />
+            <SummaryStat label="Initial Grade" value={t.initialGrade !== null ? t.initialGrade.toFixed(2) : "—"} />
             <SummaryStat
-              label="Quarterly Grade"
-              value={q.quarterlyGrade ?? "—"}
-              highlight={q.quarterlyGrade !== null ? (q.quarterlyGrade >= 75 ? "verified" : "destructive") : undefined}
+              label="Term Grade"
+              value={t.termGrade ?? "—"}
+              highlight={t.termGrade !== null ? (t.termGrade >= 75 ? "verified" : "destructive") : undefined}
             />
           </Card>
 
-          {q.assignments.length === 0 ? (
+          {t.assignments.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              No assignments tagged to Quarter {q.quarter} yet.
+              No assignments tagged to {TERM_LABELS[t.semester]} yet.
             </p>
           ) : (
             <Card variant="glass" className="overflow-hidden">
@@ -57,7 +57,7 @@ export function GradeHistoryTab({ classId, quarters }: GradeHistoryTabProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {q.assignments.map((a) => (
+                  {t.assignments.map((a) => (
                     <TableRow key={a.assignmentId} className="border-border/40">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">

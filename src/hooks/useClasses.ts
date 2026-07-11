@@ -42,8 +42,6 @@ export function useClasses() {
       const input: CreateClassInput =
         typeof nameOrInput === "string" ? { name: nameOrInput, subjectGroup } : nameOrInput;
 
-      const isShs = (input.subjectGroup ?? "core") === "shs_core" || input.subjectGroup === "shs_track";
-
       const { error } = await supabase.from("classes").insert({
         name: input.name,
         user_id: userId,
@@ -51,8 +49,9 @@ export function useClasses() {
         subject_code: input.subjectCode || null,
         grade_level: input.gradeLevel || null,
         section: input.section || null,
-        // Trisem semester only meaningfully applies to SHS classes; basic ed defaults to 1.
-        semester: isShs ? input.semester ?? 1 : 1,
+        // Every class (elementary, JHS, SHS) now runs on the DO 15, s. 2026
+        // Trisemester calendar — 3 terms per school year.
+        semester: input.semester ?? 1,
         ...(input.schoolYear ? { school_year: input.schoolYear } : {}),
       });
       if (error) throw error;

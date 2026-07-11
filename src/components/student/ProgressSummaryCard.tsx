@@ -1,17 +1,17 @@
 import { TrendingUp, CalendarCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { QuarterGradeSummary } from "@/hooks/useStudentGradeHistory";
+import type { TermGradeSummary } from "@/hooks/useStudentGradeHistory";
 import type { AttendanceSummary } from "@/hooks/useAttendance";
 
 interface ProgressSummaryCardProps {
-  quarters: QuarterGradeSummary[];
+  terms: TermGradeSummary[];
   finalGrade: number | null;
   remarks: "PASSED" | "FAILED" | "INCOMPLETE";
   attendanceSummary: AttendanceSummary;
 }
 
-export function ProgressSummaryCard({ quarters, finalGrade, remarks, attendanceSummary }: ProgressSummaryCardProps) {
+export function ProgressSummaryCard({ terms, finalGrade, remarks, attendanceSummary }: ProgressSummaryCardProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card variant="glass" className="p-5">
@@ -22,12 +22,12 @@ export function ProgressSummaryCard({ quarters, finalGrade, remarks, attendanceS
           <h3 className="text-sm font-semibold">Grade Trend</h3>
         </div>
         <div className="mt-4 flex items-center gap-2">
-          {quarters.map((q) => (
-            <div key={q.quarter} className="flex flex-1 flex-col items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground">Q{q.quarter}</span>
-              {q.quarterlyGrade !== null ? (
-                <Badge variant={q.quarterlyGrade >= 75 ? "verified" : "destructive"} className="w-full justify-center">
-                  {q.quarterlyGrade}
+          {terms.map((t) => (
+            <div key={t.semester} className="flex flex-1 flex-col items-center gap-1.5">
+              <span className="text-[11px] text-muted-foreground">T{t.semester}</span>
+              {t.termGrade !== null ? (
+                <Badge variant={t.termGrade >= 75 ? "verified" : "destructive"} className="w-full justify-center">
+                  {t.termGrade}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="w-full justify-center text-muted-foreground">

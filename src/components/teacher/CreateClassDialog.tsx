@@ -19,14 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/gradingConfig";
+import { SUBJECT_GROUP_LABELS, TERMS, TERM_LABELS, type SubjectGroup, type Term } from "@/lib/gradingConfig";
 import type { CreateClassInput } from "@/hooks/useClasses";
 
 interface CreateClassDialogProps {
   onCreate: (input: CreateClassInput) => Promise<void>;
 }
-
-const SHS_GROUPS: SubjectGroup[] = ["shs_core", "shs_track"];
 
 export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
   const [open, setOpen] = useState(false);
@@ -34,10 +32,9 @@ export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
   const [subjectGroup, setSubjectGroup] = useState<SubjectGroup>("core");
   const [gradeLevel, setGradeLevel] = useState("");
   const [section, setSection] = useState("");
-  const [semester, setSemester] = useState<1 | 2 | 3>(1);
+  const [semester, setSemester] = useState<Term>(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const isShs = SHS_GROUPS.includes(subjectGroup);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +46,7 @@ export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
         subjectGroup,
         gradeLevel: gradeLevel.trim() || undefined,
         section: section.trim() || undefined,
-        semester: isShs ? semester : undefined,
+        semester,
       });
       setName("");
       setSubjectGroup("core");
@@ -129,24 +126,24 @@ export function CreateClassDialog({ onCreate }: CreateClassDialogProps) {
               />
             </div>
           </div>
-          {isShs && (
-            <div className="space-y-2">
-              <Label>Semester (Trisem)</Label>
-              <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as 1 | 2 | 3)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Semester 1</SelectItem>
-                  <SelectItem value="2">Semester 2</SelectItem>
-                  <SelectItem value="3">Semester 3</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Senior High School uses the 3-semester (Trisem) school calendar.
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Starting term</Label>
+            <Select value={String(semester)} onValueChange={(v) => setSemester(Number(v) as Term)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TERMS.map((t) => (
+                  <SelectItem key={t} value={String(t)}>
+                    {TERM_LABELS[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              DO 15, s. 2026 uses a 3-term (Trisemester) school calendar for all grade levels.
+            </p>
+          </div>
           <DialogFooter>
             <Button type="submit" variant="hero" disabled={loading}>
               Create Class

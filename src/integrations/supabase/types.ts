@@ -3370,7 +3370,6 @@ export type Database = {
           id: string
           max_score: number
           max_score_per_q: number | null
-          quarter: number
           question_count: number | null
           question_labels: string[] | null
           semester: number
@@ -3388,7 +3387,6 @@ export type Database = {
           id?: string
           max_score?: number
           max_score_per_q?: number | null
-          quarter?: number
           question_count?: number | null
           question_labels?: string[] | null
           semester?: number
@@ -3406,7 +3404,6 @@ export type Database = {
           id?: string
           max_score?: number
           max_score_per_q?: number | null
-          quarter?: number
           question_count?: number | null
           question_labels?: string[] | null
           semester?: number
@@ -3430,7 +3427,6 @@ export type Database = {
           class_id: string
           created_at: string
           id: string
-          quarter: number
           reason_note: string | null
           school_year: string
           semester: number
@@ -3444,7 +3440,6 @@ export type Database = {
           class_id: string
           created_at?: string
           id?: string
-          quarter?: number
           reason_note?: string | null
           school_year?: string
           semester?: number
@@ -3458,7 +3453,6 @@ export type Database = {
           class_id?: string
           created_at?: string
           id?: string
-          quarter?: number
           reason_note?: string | null
           school_year?: string
           semester?: number
@@ -3719,7 +3713,6 @@ export type Database = {
           created_at: string
           feedback: string | null
           id: string
-          quarter: number
           school_year: string
           score_descriptive: string | null
           score_numeric: number | null
@@ -3738,7 +3731,6 @@ export type Database = {
           created_at?: string
           feedback?: string | null
           id?: string
-          quarter: number
           school_year?: string
           score_descriptive?: string | null
           score_numeric?: number | null
@@ -3757,7 +3749,6 @@ export type Database = {
           created_at?: string
           feedback?: string | null
           id?: string
-          quarter?: number
           school_year?: string
           score_descriptive?: string | null
           score_numeric?: number | null
