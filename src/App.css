@@ -6,8 +6,8 @@
 }
 
 .logo {
-  height: 7em;
-  padding: 0.5em;
+  height: 10em;
+  padding: 0.1em;
   will-change: filter;
   transition: filter 300ms;
 }
