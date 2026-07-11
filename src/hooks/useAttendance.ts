@@ -15,8 +15,8 @@ export function useAttendance(studentId: string | undefined, classId: string | u
       .from("attendance_records")
       .select("*")
       .eq("student_id", studentId)
-      .eq("folder_id", classId)
-      .order("date", { ascending: false });
+      .eq("class_id", classId)
+      .order("attendance_date", { ascending: false });
     setRecords(data ?? []);
     setLoading(false);
   }, [studentId, classId]);
@@ -35,15 +35,15 @@ export function useAttendance(studentId: string | undefined, classId: string | u
       const { error } = await supabase.from("attendance_records").upsert(
         {
           student_id: studentId,
-          folder_id: classId,
+          class_id: classId,
           user_id: userId,
-          date: params.date,
+          attendance_date: params.date,
           quarter: params.quarter,
           status: params.status,
-          note: params.note ?? null,
+          reason_note: params.note ?? null,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "student_id,folder_id,date" }
+        { onConflict: "student_id,class_id,attendance_date" }
       );
       if (error) throw error;
       await refresh();

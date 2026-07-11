@@ -31,19 +31,22 @@ export function useClassAttendanceSummary(classId: string | undefined, quarter?:
 
     (async () => {
       setLoading(true);
-      let query = supabase.from("attendance_records").select("*").eq("folder_id", classId);
+      let query = supabase.from("attendance_records").select("*").eq("class_id", classId);
       if (quarter) query = query.eq("quarter", quarter);
 
-      const [attendanceRes, studentsRes] = await Promise.all([
+      const [attendanceRes, rosterRes] = await Promise.all([
         query,
-        supabase.from("students").select("id, name").eq("folder_id", classId),
+        supabase.from("class_students").select("student_id, students(first_name, last_name)").eq("class_id", classId),
       ]);
 
       if (active) {
         setRecords(attendanceRes.data ?? []);
         const names: Record<string, string> = {};
-        for (const student of studentsRes.data ?? []) {
-          names[student.id] = student.name;
+        for (const row of rosterRes.data ?? []) {
+          const student = row.students as unknown as { first_name: string; last_name: string } | null;
+          if (student) {
+            names[row.student_id] = [student.first_name, student.last_name].filter(Boolean).join(" ").trim();
+          }
         }
         setStudentNames(names);
         setLoading(false);
@@ -57,7 +60,7 @@ export function useClassAttendanceSummary(classId: string | undefined, quarter?:
 
   const data = useMemo<ClassAttendanceSummaryData>(() => {
     const overall = summarizeAttendance(records);
-    const daysRecorded = new Set(records.map((r) => r.date)).size;
+    const daysRecorded = new Set(records.map((r) => r.attendance_date)).size;
 
     const byStudentMap = new Map<string, AttendanceRow[]>();
     for (const record of records) {

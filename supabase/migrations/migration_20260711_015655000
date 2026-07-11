@@ -1,0 +1,28 @@
+-- Additive extension columns preserving existing rubric-grading and OCR
+-- per-question breakdown functionality on top of the new DO-15-shaped tables.
+alter table assignments add column if not exists assessment_type text default 'simple' check (assessment_type in ('simple','rubric'));
+alter table assignments add column if not exists question_count integer default 1;
+alter table assignments add column if not exists max_score_per_q numeric default 100;
+alter table assignments add column if not exists question_labels text[];
+
+alter table grade_records add column if not exists scores integer[];
+alter table grade_records add column if not exists confidence_vals numeric[];
+alter table grade_records add column if not exists feedback text;
+alter table grade_records add column if not exists student_name text;
+
+-- Backfill the extension columns from the legacy per-question data already migrated.
+update assignments a
+set assessment_type = fl.assessment_type,
+    question_count = coalesce(fl.question_count, 1),
+    max_score_per_q = coalesce(fl.max_score_per_q, a.max_score),
+    question_labels = fl.question_labels
+from files_legacy fl
+where a.id = fl.id;
+
+update grade_records gr
+set scores = gl.scores,
+    confidence_vals = gl.confidence_vals,
+    feedback = gl.feedback,
+    student_name = gl.student_name
+from grade_ledger_legacy gl
+where gr.id = gl.id;

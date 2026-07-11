@@ -42,7 +42,7 @@ const ClassDetail = () => {
   const visibleAssignments = useMemo(() => {
     const query = assignmentSearch.trim().toLowerCase();
     if (!query) return assignments;
-    return assignments.filter((a) => a.name.toLowerCase().includes(query));
+    return assignments.filter((a) => a.title.toLowerCase().includes(query));
   }, [assignments, assignmentSearch]);
 
   if (classLoading) {

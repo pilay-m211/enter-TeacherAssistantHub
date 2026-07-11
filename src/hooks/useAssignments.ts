@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import type { AssignmentComponent } from "@/lib/depedGrading";
+import type { AssignmentComponent } from "@/lib/gradingConfig";
 
-export type AssignmentRow = Tables<"files">;
+export type AssignmentRow = Tables<"assignments">;
 
 export interface CreateAssignmentInput {
   name: string;
@@ -13,6 +13,7 @@ export interface CreateAssignmentInput {
   criteria?: string[]; // only used when gradingType === "rubric"
   component?: AssignmentComponent;
   quarter?: number;
+  semester?: 1 | 2 | 3;
 }
 
 export function useAssignments(classId: string | undefined) {
@@ -23,9 +24,9 @@ export function useAssignments(classId: string | undefined) {
     if (!classId) return;
     setLoading(true);
     const { data } = await supabase
-      .from("files")
+      .from("assignments")
       .select("*")
-      .eq("folder_id", classId)
+      .eq("class_id", classId)
       .order("created_at", { ascending: false });
     setAssignments(data ?? []);
     setLoading(false);
@@ -44,23 +45,25 @@ export function useAssignments(classId: string | undefined) {
 
       const isRubric = input.gradingType === "rubric";
       const questionCount = isRubric ? Math.max(2, input.criteria?.length ?? 2) : 1;
+      const maxScore = input.maxScorePerQuestion * questionCount;
 
       const { data, error } = await supabase
-        .from("files")
+        .from("assignments")
         .insert({
-          name: input.name,
-          subject: input.subject || null,
-          folder_id: classId,
+          title: input.name,
+          class_id: classId,
           user_id: userId,
           assessment_type: isRubric ? "rubric" : "simple",
           question_count: questionCount,
           max_score_per_q: input.maxScorePerQuestion,
+          max_score: maxScore,
           question_labels: isRubric ? input.criteria ?? [] : null,
           // Sensible defaults; teachers retag component/quarter from the assignment
           // settings dialog once created, or the caller can pass them explicitly
           // (used by the OCR table importer to tag detected columns).
-          component: input.component ?? (isRubric ? "performance_task" : "written_work"),
+          component: input.component ?? (isRubric ? "performance_task" : "written_oral"),
           quarter: input.quarter ?? 1,
+          semester: input.semester ?? 1,
         })
         .select()
         .single();
@@ -73,7 +76,7 @@ export function useAssignments(classId: string | undefined) {
 
   const deleteAssignment = useCallback(
     async (id: string) => {
-      const { error } = await supabase.from("files").delete().eq("id", id);
+      const { error } = await supabase.from("assignments").delete().eq("id", id);
       if (error) throw error;
       await refresh();
     },
@@ -81,12 +84,13 @@ export function useAssignments(classId: string | undefined) {
   );
 
   const updateAssignment = useCallback(
-    async (id: string, updates: { component?: AssignmentComponent; quarter?: number }) => {
+    async (id: string, updates: { component?: AssignmentComponent; quarter?: number; semester?: 1 | 2 | 3 }) => {
       const { error } = await supabase
-        .from("files")
+        .from("assignments")
         .update({
           ...(updates.component !== undefined ? { component: updates.component } : {}),
           ...(updates.quarter !== undefined ? { quarter: updates.quarter } : {}),
+          ...(updates.semester !== undefined ? { semester: updates.semester } : {}),
         })
         .eq("id", id);
       if (error) throw error;
@@ -106,7 +110,7 @@ export function useAssignment(assignmentId: string | undefined) {
     if (!assignmentId) return;
     setLoading(true);
     supabase
-      .from("files")
+      .from("assignments")
       .select("*")
       .eq("id", assignmentId)
       .maybeSingle()

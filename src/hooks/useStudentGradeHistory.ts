@@ -4,15 +4,15 @@ import type { ClassRow } from "@/hooks/useClasses";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 import type { GradeRow } from "@/hooks/useGrades";
 import {
-  SUBJECT_GROUP_WEIGHTS,
+  COMPONENT_WEIGHTS_BY_SUBJECT_GROUP,
   computeComponentPercentages,
   computeInitialGrade,
   computeQuarterlyGrade,
-  computeFinalGrade,
+  computeSemesterFinalGrade,
   remarksFor,
   type AssignmentComponent,
   type SubjectGroup,
-} from "@/lib/depedGrading";
+} from "@/lib/gradingConfig";
 
 export interface AssignmentGradeDetail {
   assignmentId: string;
@@ -43,7 +43,7 @@ function scoreTotal(scores: number[] | null | undefined): number {
 /**
  * Reuses the exact same DepEd computation functions as useGradeBook, filtered
  * to a single student. No new grading logic — this is a read-only view over
- * the same files/grade_ledger rows.
+ * the same assignments/grade_records rows.
  */
 export function useStudentGradeHistory(studentId: string | undefined, classId: string | undefined) {
   const [classItem, setClassItem] = useState<ClassRow | null>(null);
@@ -58,17 +58,17 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
     (async () => {
       setLoading(true);
       const [classRes, assignmentsRes] = await Promise.all([
-        supabase.from("folders").select("*").eq("id", classId).maybeSingle(),
-        supabase.from("files").select("*").eq("folder_id", classId),
+        supabase.from("classes").select("*").eq("id", classId).maybeSingle(),
+        supabase.from("assignments").select("*").eq("class_id", classId),
       ]);
 
       const assignmentIds = (assignmentsRes.data ?? []).map((a) => a.id);
       let gradeRows: GradeRow[] = [];
       if (assignmentIds.length > 0) {
         const gradesRes = await supabase
-          .from("grade_ledger")
+          .from("grade_records")
           .select("*")
-          .in("file_id", assignmentIds)
+          .in("assignment_id", assignmentIds)
           .eq("student_id", studentId);
         gradeRows = gradesRes.data ?? [];
       }
@@ -88,10 +88,10 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
 
   const quarters = useMemo<QuarterGradeSummary[]>(() => {
     const subjectGroup = (classItem?.subject_group as SubjectGroup) ?? "core";
-    const weights = SUBJECT_GROUP_WEIGHTS[subjectGroup];
+    const weights = COMPONENT_WEIGHTS_BY_SUBJECT_GROUP[subjectGroup];
 
     const gradeByAssignment = new Map<string, GradeRow>();
-    for (const grade of grades) gradeByAssignment.set(grade.file_id, grade);
+    for (const grade of grades) gradeByAssignment.set(grade.assignment_id, grade);
 
     const result: QuarterGradeSummary[] = [];
     for (let quarter = 1; quarter <= 4; quarter++) {
@@ -99,13 +99,14 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
 
       const details: AssignmentGradeDetail[] = quarterAssignments.map((assignment) => {
         const grade = gradeByAssignment.get(assignment.id);
-        const maxScore = grade?.max_total ?? (assignment.max_score_per_q ?? 0) * (assignment.question_count ?? 1);
+        const rawScore = grade?.scores ? scoreTotal(grade.scores) : grade?.score_numeric ?? 0;
+        const maxScore = (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1);
         return {
           assignmentId: assignment.id,
-          name: assignment.name,
-          component: (assignment.component as AssignmentComponent) ?? "written_work",
+          name: assignment.title,
+          component: (assignment.component as AssignmentComponent) ?? "written_oral",
           quarter,
-          rawScore: scoreTotal(grade?.scores),
+          rawScore: rawScore ?? 0,
           maxScore,
           source: (grade?.source as "manual" | "ocr") ?? "manual",
           feedback: grade?.feedback ?? null,
@@ -120,9 +121,9 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
 
       result.push({
         quarter,
-        writtenWorkPct: pcts.writtenWorkPct,
+        writtenWorkPct: pcts.writtenOralPct,
         performanceTaskPct: pcts.performanceTaskPct,
-        quarterlyAssessmentPct: pcts.quarterlyAssessmentPct,
+        quarterlyAssessmentPct: pcts.examinationPct,
         initialGrade,
         quarterlyGrade,
         assignments: details,
@@ -132,7 +133,7 @@ export function useStudentGradeHistory(studentId: string | undefined, classId: s
   }, [classItem, assignments, grades]);
 
   const finalGrade = useMemo(
-    () => computeFinalGrade(quarters.map((q) => q.quarterlyGrade)),
+    () => computeSemesterFinalGrade(quarters.map((q) => q.quarterlyGrade)),
     [quarters]
   );
   const remarks = useMemo(() => remarksFor(finalGrade), [finalGrade]);

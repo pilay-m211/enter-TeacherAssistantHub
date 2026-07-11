@@ -1,0 +1,222 @@
+-- ============================================================
+-- PHASE 1 MIGRATION: Rearchitect data model (classes/students/class_students/
+-- assignments/grade_records) + Trisem/semester support + LRN-based students.
+-- Legacy tables are renamed (not dropped) to preserve all existing data.
+-- ============================================================
+
+-- 1. Rename legacy tables
+alter table folders rename to folders_legacy;
+alter table students rename to students_legacy;
+alter table files rename to files_legacy;
+alter table grade_ledger rename to grade_ledger_legacy;
+
+-- Postgres does not rename indexes when a table is renamed; free up the index
+-- names we need to reuse on the new tables by renaming the legacy ones.
+alter index idx_students_name_trgm rename to idx_students_legacy_name_trgm;
+alter index idx_students_number_trgm rename to idx_students_legacy_number_trgm;
+alter index idx_folders_name_trgm rename to idx_folders_legacy_name_trgm;
+alter index idx_files_name_trgm rename to idx_files_legacy_name_trgm;
+
+-- 2. classes (was folders)
+create table classes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  subject_code text,
+  subject_group text not null default 'core'
+    check (subject_group in ('core','mapeh_tle','shs_core','shs_track')),
+  grade_level text,
+  section text,
+  semester smallint not null default 1 check (semester in (1,2,3)),
+  school_year text not null default (to_char(now(), 'YYYY') || '-' || to_char(now() + interval '1 year', 'YYYY')),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index idx_classes_user on classes(user_id);
+create index idx_classes_name_trgm on classes using gin (name gin_trgm_ops);
+alter table classes enable row level security;
+create policy "classes_owner" on classes for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+insert into classes (id, user_id, name, subject_group, is_active, created_at)
+select
+  id,
+  user_id,
+  name,
+  case subject_group when 'tle_mapeh' then 'mapeh_tle' else 'core' end,
+  true,
+  coalesce(created_at, now())
+from folders_legacy;
+
+-- 3. students (LRN-based)
+create table students (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  lrn text,
+  last_name text not null,
+  first_name text not null,
+  middle_name text,
+  sex text check (sex in ('male','female')),
+  birthdate date,
+  is_archived boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index idx_students_user on students(user_id);
+create index idx_students_lrn_trgm on students using gin (lrn gin_trgm_ops);
+create index idx_students_name_trgm on students using gin ((last_name || ' ' || first_name) gin_trgm_ops);
+alter table students enable row level security;
+create policy "students_owner" on students for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+insert into students (id, user_id, last_name, first_name, is_archived, created_at)
+select
+  id,
+  user_id,
+  case when array_length(regexp_split_to_array(trim(name), '\s+'), 1) >= 2
+    then (regexp_split_to_array(trim(name), '\s+'))[array_length(regexp_split_to_array(trim(name), '\s+'), 1)]
+    else trim(name)
+  end,
+  case when array_length(regexp_split_to_array(trim(name), '\s+'), 1) >= 2
+    then array_to_string((regexp_split_to_array(trim(name), '\s+'))[1:array_length(regexp_split_to_array(trim(name), '\s+'), 1)-1], ' ')
+    else trim(name)
+  end,
+  coalesce(status, 'active') <> 'active',
+  coalesce(created_at, now())
+from students_legacy;
+
+-- 4. class_students (many-to-many roster join)
+create table class_students (
+  id uuid primary key default gen_random_uuid(),
+  class_id uuid not null references classes(id) on delete cascade,
+  student_id uuid not null references students(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (class_id, student_id)
+);
+create index idx_class_students_class on class_students(class_id);
+create index idx_class_students_student on class_students(student_id);
+alter table class_students enable row level security;
+create policy "class_students_owner" on class_students for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+insert into class_students (class_id, student_id, user_id)
+select folder_id, id, user_id from students_legacy where folder_id is not null;
+
+-- 5. assignments (was files)
+create table assignments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  class_id uuid not null references classes(id) on delete cascade,
+  title text not null,
+  component text not null default 'written_oral'
+    check (component in ('written_oral','performance_task','examination')),
+  quarter smallint not null default 1 check (quarter between 1 and 4),
+  semester smallint not null default 1 check (semester in (1,2,3)),
+  max_score numeric not null default 100,
+  weight numeric,
+  due_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index idx_assignments_class on assignments(class_id);
+create index idx_assignments_title_trgm on assignments using gin (title gin_trgm_ops);
+alter table assignments enable row level security;
+create policy "assignments_owner" on assignments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+insert into assignments (id, user_id, class_id, title, component, quarter, max_score, created_at)
+select
+  id,
+  user_id,
+  folder_id,
+  name,
+  case component
+    when 'performance_task' then 'performance_task'
+    when 'quarterly_assessment' then 'examination'
+    else 'written_oral'
+  end,
+  coalesce(quarter, 1),
+  coalesce(max_score_per_q, 10) * coalesce(question_count, 1),
+  coalesce(created_at, now())
+from files_legacy
+where folder_id is not null;
+
+-- 6. grade_records (was grade_ledger; one row per student per assignment)
+create table grade_records (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  student_id uuid not null references students(id) on delete cascade,
+  class_id uuid not null references classes(id) on delete cascade,
+  assignment_id uuid not null references assignments(id) on delete cascade,
+  score_numeric numeric,
+  score_descriptive text,
+  source text not null default 'manual' check (source in ('manual','ocr')),
+  quarter smallint not null check (quarter between 1 and 4),
+  semester smallint not null default 1 check (semester in (1,2,3)),
+  school_year text not null default (to_char(now(),'YYYY') || '-' || to_char(now() + interval '1 year','YYYY')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (student_id, assignment_id)
+);
+create index idx_grade_records_class on grade_records(class_id);
+create index idx_grade_records_student on grade_records(student_id);
+create index idx_grade_records_quarter_sem on grade_records(quarter, semester);
+alter table grade_records enable row level security;
+create policy "grade_records_owner" on grade_records for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+insert into grade_records (id, user_id, student_id, class_id, assignment_id, score_numeric, source, quarter, created_at, updated_at)
+select
+  gl.id,
+  gl.user_id,
+  gl.student_id::uuid,
+  a.class_id,
+  gl.file_id,
+  (select coalesce(sum(s), 0) from unnest(gl.scores) s)::numeric,
+  coalesce(gl.source, 'manual'),
+  coalesce(a.quarter, 1),
+  coalesce(gl.created_at, now()),
+  coalesce(gl.updated_at, now())
+from grade_ledger_legacy gl
+join assignments a on a.id = gl.file_id
+where gl.student_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+
+-- 7. attendance_records: alter in place, repoint FKs to new classes/students
+alter table attendance_records rename column folder_id to class_id;
+alter table attendance_records rename column note to reason_note;
+alter table attendance_records rename column date to attendance_date;
+alter table attendance_records add column if not exists semester smallint not null default 1 check (semester in (1,2,3));
+alter table attendance_records add column if not exists school_year text not null default (to_char(now(),'YYYY') || '-' || to_char(now() + interval '1 year','YYYY'));
+
+alter table attendance_records drop constraint if exists attendance_records_folder_id_fkey;
+alter table attendance_records add constraint attendance_records_class_id_fkey foreign key (class_id) references classes(id) on delete cascade;
+alter table attendance_records drop constraint if exists attendance_records_student_id_fkey;
+alter table attendance_records add constraint attendance_records_student_id_fkey foreign key (student_id) references students(id) on delete cascade;
+
+-- 8. notes: rename student_notes -> notes, repoint FKs
+alter table student_notes rename to notes;
+alter table notes rename column folder_id to class_id;
+alter table notes rename column content to note_text;
+
+alter table notes drop constraint if exists student_notes_folder_id_fkey;
+alter table notes add constraint notes_class_id_fkey foreign key (class_id) references classes(id) on delete set null;
+alter table notes drop constraint if exists student_notes_student_id_fkey;
+alter table notes add constraint notes_student_id_fkey foreign key (student_id) references students(id) on delete cascade;
+
+-- 9. student_profiles: repoint FK to new students table
+alter table student_profiles drop constraint if exists student_profiles_student_id_fkey;
+alter table student_profiles add constraint student_profiles_student_id_fkey foreign key (student_id) references students(id) on delete cascade;
+
+-- 10. ocr_import_audit: repoint FKs to new classes/assignments (ids preserved)
+alter table ocr_import_audit drop constraint if exists ocr_import_audit_folder_id_fkey;
+alter table ocr_import_audit add constraint ocr_import_audit_class_id_fkey foreign key (folder_id) references classes(id) on delete set null;
+alter table ocr_import_audit drop constraint if exists ocr_import_audit_file_id_fkey;
+alter table ocr_import_audit add constraint ocr_import_audit_assignment_id_fkey foreign key (file_id) references assignments(id) on delete set null;
+
+-- 11. school_settings (per-teacher grading config; Settings UI wiring is Phase 3)
+create table school_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  school_year text not null default (to_char(now(),'YYYY') || '-' || to_char(now() + interval '1 year','YYYY')),
+  grading_config jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table school_settings enable row level security;
+create policy "school_settings_owner" on school_settings for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

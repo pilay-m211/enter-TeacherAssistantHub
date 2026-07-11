@@ -75,7 +75,7 @@ const AssignmentGrading = () => {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{assignment.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{assignment.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {assignment.assessment_type === "rubric"
               ? `Rubric grading · ${questionCount} criteria · ${maxPerQuestion} pts each`

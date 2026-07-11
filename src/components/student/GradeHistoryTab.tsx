@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { COMPONENT_LABELS } from "@/lib/depedGrading";
+import { COMPONENT_LABELS } from "@/lib/gradingConfig";
 import type { QuarterGradeSummary } from "@/hooks/useStudentGradeHistory";
 
 interface GradeHistoryTabProps {

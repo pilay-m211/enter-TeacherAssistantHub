@@ -11,7 +11,7 @@ import { useStudents } from "@/hooks/useStudents";
 import { useAssignments } from "@/hooks/useAssignments";
 import { ImportClassRecordDialog } from "@/components/teacher/ImportClassRecordDialog";
 import { SearchInput } from "@/components/search/SearchInput";
-import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, type AssignmentComponent, type SubjectGroup } from "@/lib/depedGrading";
+import { COMPONENT_LABELS, SUBJECT_GROUP_LABELS, type AssignmentComponent, type SubjectGroup } from "@/lib/gradingConfig";
 import { exportEClassRecord, exportSummaryOfQuarterlyGrades, exportRawBackupCsv } from "@/lib/gradeBookExports";
 
 const QUARTERS = [1, 2, 3, 4];
@@ -39,10 +39,10 @@ const GradeBook = () => {
     const map = new Map<string, { name: string; component: AssignmentComponent; quarter: number; maxTotal: number }>();
     for (const assignment of assignments) {
       map.set(assignment.id, {
-        name: assignment.name,
-        component: (assignment.component as AssignmentComponent) ?? "written_work",
+        name: assignment.title,
+        component: (assignment.component as AssignmentComponent) ?? "written_oral",
         quarter: assignment.quarter ?? 1,
-        maxTotal: (assignment.max_score_per_q ?? 0) * (assignment.question_count ?? 1),
+        maxTotal: (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1),
       });
     }
     return map;
@@ -164,7 +164,7 @@ const GradeBook = () => {
                       <div className="flex flex-wrap gap-1.5 border-b border-border/50 px-4 py-3">
                         {quarterAssignments.map((a) => (
                           <Badge key={a.id} variant="outline" className="text-xs">
-                            {a.name} · {COMPONENT_LABELS[(a.component as AssignmentComponent) ?? "written_work"]}
+                            {a.title} · {COMPONENT_LABELS[(a.component as AssignmentComponent) ?? "written_oral"]}
                           </Badge>
                         ))}
                       </div>

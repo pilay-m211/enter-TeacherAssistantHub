@@ -1,5 +1,5 @@
 import { downloadWorkbook, downloadCsv, type ExportSheet } from "@/lib/exportUtils";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/depedGrading";
+import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
 import type { GradeBookData } from "@/hooks/useGradeBook";
 import type { GradeRow } from "@/hooks/useGrades";
 
@@ -52,15 +52,15 @@ export function exportRawBackupCsv(
   className: string
 ) {
   const rows = grades.map((grade) => {
-    const meta = assignmentMeta.get(grade.file_id);
-    const total = (grade.scores ?? []).reduce((sum, s) => sum + (s || 0), 0);
+    const meta = assignmentMeta.get(grade.assignment_id);
+    const total = grade.scores ? (grade.scores ?? []).reduce((sum, s) => sum + (s || 0), 0) : grade.score_numeric ?? 0;
     return {
       "Learner's Name": grade.student_name,
       Assignment: meta?.name ?? "",
       Component: meta ? COMPONENT_LABELS[meta.component] : "",
       Quarter: meta ? QUARTER_LABELS[meta.quarter - 1] : "",
       "Raw Score": total,
-      "Max Score": grade.max_total ?? meta?.maxTotal ?? "",
+      "Max Score": meta?.maxTotal ?? "",
       Feedback: grade.feedback ?? "",
     };
   });

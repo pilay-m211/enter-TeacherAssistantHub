@@ -38,7 +38,7 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
     const query = search.trim().toLowerCase();
     if (!query) return notes;
     return notes.filter(
-      (n) => n.title?.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+      (n) => n.title?.toLowerCase().includes(query) || n.note_text.toLowerCase().includes(query)
     );
   }, [notes, search]);
 
@@ -52,7 +52,7 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
   const openForEdit = (note: StudentNoteRow) => {
     setEditingId(note.id);
     setTitle(note.title ?? "");
-    setContent(note.content);
+    setContent(note.note_text);
     setDialogOpen(true);
   };
 
@@ -146,7 +146,7 @@ export function NotesTab({ notes, onAdd, onUpdate, onDelete }: NotesTabProps) {
                     </h4>
                   )}
                   <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                    <HighlightMatch text={note.content} query={search} />
+                    <HighlightMatch text={note.note_text} query={search} />
                   </p>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {new Date(note.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}

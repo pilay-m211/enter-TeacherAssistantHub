@@ -6,7 +6,7 @@ import { upsertGradeRecord } from "@/lib/gradeWrites";
 import { matchStudentByName } from "@/lib/studentMatching";
 import type { StudentRow } from "@/hooks/useStudents";
 import type { AssignmentRow, CreateAssignmentInput } from "@/hooks/useAssignments";
-import type { AssignmentComponent } from "@/lib/depedGrading";
+import type { AssignmentComponent } from "@/lib/gradingConfig";
 
 export interface OcrTableColumnMapping {
   header: string;
@@ -62,7 +62,7 @@ export function useOcrTableImport() {
           header,
           assignmentId: null,
           newAssignmentMaxScore: 100,
-          newAssignmentComponent: "written_work",
+          newAssignmentComponent: "written_oral",
           include: true,
         }))
       );
@@ -142,11 +142,17 @@ export function useOcrTableImport() {
       if (newStudentNames.length > 0) {
         await ctx.addStudents(newStudentNames);
         const { data } = await supabase
-          .from("students")
-          .select("*")
-          .eq("folder_id", ctx.classId)
-          .order("name", { ascending: true });
-        freshStudents = data ?? ctx.students;
+          .from("class_students")
+          .select("student_id, students(*)")
+          .eq("class_id", ctx.classId);
+        freshStudents = (data ?? [])
+          .map((row) => {
+            const student = row.students as unknown as import("@/hooks/useStudents").StudentRecord | null;
+            if (!student) return null;
+            const name = [student.first_name, student.last_name].filter(Boolean).join(" ").trim() || student.last_name;
+            return { ...student, name, folder_id: ctx.classId, status: student.is_archived ? ("inactive" as const) : ("active" as const), student_number: student.lrn };
+          })
+          .filter((s): s is StudentRow => s !== null);
       }
 
       const resolveStudentId = (row: OcrTableRowDraft): string | null => {

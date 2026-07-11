@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type StudentNoteRow = Tables<"student_notes">;
+export type StudentNoteRow = Tables<"notes">;
 
 export function useStudentNotes(studentId: string | undefined, classId?: string) {
   const [notes, setNotes] = useState<StudentNoteRow[]>([]);
@@ -12,7 +12,7 @@ export function useStudentNotes(studentId: string | undefined, classId?: string)
     if (!studentId) return;
     setLoading(true);
     const { data } = await supabase
-      .from("student_notes")
+      .from("notes")
       .select("*")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
@@ -32,12 +32,12 @@ export function useStudentNotes(studentId: string | undefined, classId?: string)
       const userId = userData.user?.id;
       if (!userId) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("student_notes").insert({
+      const { error } = await supabase.from("notes").insert({
         student_id: studentId,
-        folder_id: classId ?? null,
+        class_id: classId ?? null,
         user_id: userId,
         title: params.title?.trim() || null,
-        content: params.content.trim(),
+        note_text: params.content.trim(),
         visibility: params.visibility ?? "private",
       });
       if (error) throw error;
@@ -52,10 +52,10 @@ export function useStudentNotes(studentId: string | undefined, classId?: string)
         throw new Error("Note content cannot be empty");
       }
       const { error } = await supabase
-        .from("student_notes")
+        .from("notes")
         .update({
           ...(updates.title !== undefined ? { title: updates.title.trim() || null } : {}),
-          ...(updates.content !== undefined ? { content: updates.content.trim() } : {}),
+          ...(updates.content !== undefined ? { note_text: updates.content.trim() } : {}),
           ...(updates.visibility !== undefined ? { visibility: updates.visibility } : {}),
           updated_at: new Date().toISOString(),
         })
@@ -68,7 +68,7 @@ export function useStudentNotes(studentId: string | undefined, classId?: string)
 
   const deleteNote = useCallback(
     async (id: string) => {
-      const { error } = await supabase.from("student_notes").delete().eq("id", id);
+      const { error } = await supabase.from("notes").delete().eq("id", id);
       if (error) throw error;
       await refresh();
     },

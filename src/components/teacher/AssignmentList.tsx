@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AssignmentSettingsDialog } from "@/components/teacher/AssignmentSettingsDialog";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/depedGrading";
+import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 
 interface AssignmentListProps {
@@ -29,12 +29,12 @@ export function AssignmentList({ classId, assignments, onDelete, onUpdate }: Ass
   return (
     <div className="space-y-3">
       {assignments.map((assignment) => {
-        const component = (assignment.component as AssignmentComponent) ?? "written_work";
+        const component = (assignment.component as AssignmentComponent) ?? "written_oral";
         return (
           <Card key={assignment.id} variant="glass" className="flex items-center justify-between p-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h4 className="font-medium">{assignment.name}</h4>
+                <h4 className="font-medium">{assignment.title}</h4>
                 <Badge variant={assignment.assessment_type === "rubric" ? "verified" : "outline"}>
                   {assignment.assessment_type === "rubric" ? "Rubric" : "Simple"}
                 </Badge>

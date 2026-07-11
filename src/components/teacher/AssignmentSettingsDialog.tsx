@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/depedGrading";
+import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 
 interface AssignmentSettingsDialogProps {
@@ -32,7 +32,7 @@ const QUARTERS = [1, 2, 3, 4];
 export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const [component, setComponent] = useState<AssignmentComponent>(
-    (assignment.component as AssignmentComponent) ?? "written_work"
+    (assignment.component as AssignmentComponent) ?? "written_oral"
   );
   const [quarter, setQuarter] = useState<number>(assignment.quarter ?? 1);
   const [saving, setSaving] = useState(false);
@@ -40,7 +40,7 @@ export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSetti
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
-      setComponent((assignment.component as AssignmentComponent) ?? "written_work");
+      setComponent((assignment.component as AssignmentComponent) ?? "written_oral");
       setQuarter(assignment.quarter ?? 1);
     }
     setOpen(next);
@@ -76,7 +76,7 @@ export function AssignmentSettingsDialog({ assignment, onSave }: AssignmentSetti
       </DialogTrigger>
       <DialogContent className="glass-panel-strong">
         <DialogHeader>
-          <DialogTitle>Grading settings — {assignment.name}</DialogTitle>
+          <DialogTitle>Grading settings — {assignment.title}</DialogTitle>
           <DialogDescription>
             Tag this assignment's DepEd component and quarter so it's included correctly in the Grade Book.
           </DialogDescription>

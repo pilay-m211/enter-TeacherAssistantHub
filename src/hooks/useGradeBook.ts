@@ -5,15 +5,15 @@ import type { StudentRow } from "@/hooks/useStudents";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 import type { GradeRow } from "@/hooks/useGrades";
 import {
-  SUBJECT_GROUP_WEIGHTS,
+  COMPONENT_WEIGHTS_BY_SUBJECT_GROUP,
   computeComponentPercentages,
   computeInitialGrade,
   computeQuarterlyGrade,
-  computeFinalGrade,
+  computeSemesterFinalGrade,
   remarksFor,
   type AssignmentComponent,
   type SubjectGroup,
-} from "@/lib/depedGrading";
+} from "@/lib/gradingConfig";
 
 export interface QuarterStudentGrade {
   studentId: string;
@@ -60,22 +60,38 @@ export function useGradeBook(classId: string | undefined) {
     (async () => {
       setLoading(true);
 
-      const [classRes, studentsRes, assignmentsRes] = await Promise.all([
-        supabase.from("folders").select("*").eq("id", classId).maybeSingle(),
-        supabase.from("students").select("*").eq("folder_id", classId).order("name", { ascending: true }),
-        supabase.from("files").select("*").eq("folder_id", classId),
+      const [classRes, rosterRes, assignmentsRes] = await Promise.all([
+        supabase.from("classes").select("*").eq("id", classId).maybeSingle(),
+        supabase.from("class_students").select("student_id, students(*)").eq("class_id", classId),
+        supabase.from("assignments").select("*").eq("class_id", classId),
       ]);
+
+      const rosterStudents: StudentRow[] = (rosterRes.data ?? [])
+        .map((row) => {
+          const student = row.students as unknown as import("@/hooks/useStudents").StudentRecord | null;
+          if (!student) return null;
+          const name = [student.first_name, student.last_name].filter(Boolean).join(" ").trim() || student.last_name;
+          return {
+            ...student,
+            name,
+            folder_id: classId,
+            status: student.is_archived ? ("inactive" as const) : ("active" as const),
+            student_number: student.lrn,
+          };
+        })
+        .filter((s): s is StudentRow => s !== null)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
       const assignmentIds = (assignmentsRes.data ?? []).map((a) => a.id);
       let gradeRows: GradeRow[] = [];
       if (assignmentIds.length > 0) {
-        const gradesRes = await supabase.from("grade_ledger").select("*").in("file_id", assignmentIds);
+        const gradesRes = await supabase.from("grade_records").select("*").in("assignment_id", assignmentIds);
         gradeRows = gradesRes.data ?? [];
       }
 
       if (active) {
         setClassItem(classRes.data ?? null);
-        setStudents(studentsRes.data ?? []);
+        setStudents(rosterStudents);
         setAssignments(assignmentsRes.data ?? []);
         setGrades(gradeRows);
         setLoading(false);
@@ -93,7 +109,7 @@ export function useGradeBook(classId: string | undefined) {
 
   const data = useMemo<GradeBookData>(() => {
     const subjectGroup = (classItem?.subject_group as SubjectGroup) ?? "core";
-    const weights = SUBJECT_GROUP_WEIGHTS[subjectGroup];
+    const weights = COMPONENT_WEIGHTS_BY_SUBJECT_GROUP[subjectGroup];
 
     const assignmentsByQuarter: Record<number, AssignmentRow[]> = { 1: [], 2: [], 3: [], 4: [] };
     for (const assignment of assignments) {
@@ -103,11 +119,10 @@ export function useGradeBook(classId: string | undefined) {
 
     const gradeByAssignmentAndStudent = new Map<string, GradeRow>();
     for (const grade of grades) {
-      gradeByAssignmentAndStudent.set(`${grade.file_id}:${grade.student_id}`, grade);
+      gradeByAssignmentAndStudent.set(`${grade.assignment_id}:${grade.student_id}`, grade);
     }
 
     const quarterGrades: Record<number, QuarterStudentGrade[]> = { 1: [], 2: [], 3: [], 4: [] };
-    // studentId -> quarter -> quarterlyGrade, built while iterating quarters below
     const quarterlyByStudent = new Map<string, Array<number | null>>();
     for (const student of students) {
       quarterlyByStudent.set(student.id, [null, null, null, null]);
@@ -119,10 +134,12 @@ export function useGradeBook(classId: string | undefined) {
       for (const student of students) {
         const entries = quarterAssignments.map((assignment) => {
           const grade = gradeByAssignmentAndStudent.get(`${assignment.id}:${student.id}`);
+          const rawTotal = grade?.scores ? scoreTotal(grade.scores) : grade?.score_numeric ?? 0;
+          const maxTotal = (assignment.max_score_per_q ?? assignment.max_score ?? 0) * (assignment.question_count ?? 1);
           return {
-            component: (assignment.component as AssignmentComponent) ?? "written_work",
-            scoreTotal: scoreTotal(grade?.scores),
-            maxTotal: grade?.max_total ?? (assignment.max_score_per_q ?? 0) * (assignment.question_count ?? 1),
+            component: (assignment.component as AssignmentComponent) ?? "written_oral",
+            scoreTotal: rawTotal ?? 0,
+            maxTotal,
           };
         });
 
@@ -133,9 +150,9 @@ export function useGradeBook(classId: string | undefined) {
         quarterGrades[quarter].push({
           studentId: student.id,
           studentName: student.name,
-          writtenWorkPct: pcts.writtenWorkPct,
+          writtenWorkPct: pcts.writtenOralPct,
           performanceTaskPct: pcts.performanceTaskPct,
-          quarterlyAssessmentPct: pcts.quarterlyAssessmentPct,
+          quarterlyAssessmentPct: pcts.examinationPct,
           initialGrade,
           quarterlyGrade,
         });
@@ -147,7 +164,7 @@ export function useGradeBook(classId: string | undefined) {
 
     const yearSummary: StudentYearSummary[] = students.map((student) => {
       const quarterlyGradesArr = quarterlyByStudent.get(student.id) ?? [null, null, null, null];
-      const finalGrade = computeFinalGrade(quarterlyGradesArr);
+      const finalGrade = computeSemesterFinalGrade(quarterlyGradesArr);
       return {
         studentId: student.id,
         studentName: student.name,

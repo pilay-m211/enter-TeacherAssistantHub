@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGradeBook } from "@/hooks/useGradeBook";
-import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/depedGrading";
+import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/gradingConfig";
 
 const ReportCardPrint = () => {
   const { classId } = useParams<{ classId: string }>();

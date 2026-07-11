@@ -155,7 +155,7 @@ const Scanner = () => {
                       <SelectContent>
                         {assignments.map((a) => (
                           <SelectItem key={a.id} value={a.id}>
-                            {a.name}
+                            {a.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -182,7 +182,7 @@ const Scanner = () => {
                   <div className="flex flex-col items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-5">
                     <p className="text-sm text-muted-foreground">
                       Upload a photo of {student.name}'s graded paper for{" "}
-                      <span className="font-medium text-foreground">{assignment.name}</span>. Scores are extracted
+                      <span className="font-medium text-foreground">{assignment.title}</span>. Scores are extracted
                       per question for your review before saving.
                     </p>
                     <ScanAnswerSheetButton
@@ -214,7 +214,7 @@ const Scanner = () => {
                     <SelectContent>
                       {assignments.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
-                          {a.name}
+                          {a.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -225,7 +225,7 @@ const Scanner = () => {
                   <div className="flex flex-col items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-5">
                     <p className="text-sm text-muted-foreground">
                       Upload a photo of a handwritten or printed grade sheet listing multiple students' scores for{" "}
-                      <span className="font-medium text-foreground">{assignment.name}</span>. Names are matched to
+                      <span className="font-medium text-foreground">{assignment.title}</span>. Names are matched to
                       your roster automatically.
                     </p>
                     <ScanGradeSheetButton students={students} maxTotal={maxTotal} onApply={handleApplyGradeSheet} />

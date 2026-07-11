@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/depedGrading";
+import { COMPONENT_LABELS, type AssignmentComponent } from "@/lib/gradingConfig";
 import type { AssignmentRow } from "@/hooks/useAssignments";
 import type { OcrTableColumnMapping } from "@/hooks/useOcrTableImport";
 
@@ -50,7 +50,7 @@ export function OcrColumnMappingCard({ mapping, existingAssignments, onChange }:
             <SelectItem value={NEW_ASSIGNMENT_VALUE}>Create new: "{mapping.header}"</SelectItem>
             {existingAssignments.map((a) => (
               <SelectItem key={a.id} value={a.id}>
-                {a.name}
+                {a.title}
               </SelectItem>
             ))}
           </SelectContent>

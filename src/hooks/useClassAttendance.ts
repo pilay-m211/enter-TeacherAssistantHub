@@ -36,17 +36,20 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
     if (!classId) return;
     setLoading(true);
 
-    const [studentsRes, attendanceRes] = await Promise.all([
-      supabase
-        .from("students")
-        .select("*")
-        .eq("folder_id", classId)
-        .eq("status", "active")
-        .order("name", { ascending: true }),
-      supabase.from("attendance_records").select("*").eq("folder_id", classId).eq("date", date),
+    const [rosterRes, attendanceRes] = await Promise.all([
+      supabase.from("class_students").select("student_id, students(*)").eq("class_id", classId),
+      supabase.from("attendance_records").select("*").eq("class_id", classId).eq("attendance_date", date),
     ]);
 
-    const activeStudents = studentsRes.data ?? [];
+    const activeStudents: StudentRow[] = (rosterRes.data ?? [])
+      .map((row) => {
+        const student = row.students as unknown as import("@/hooks/useStudents").StudentRecord | null;
+        if (!student || student.is_archived) return null;
+        const name = [student.first_name, student.last_name].filter(Boolean).join(" ").trim() || student.last_name;
+        return { ...student, name, folder_id: classId, status: "active" as const, student_number: student.lrn };
+      })
+      .filter((s): s is StudentRow => s !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
     const existingRecords = attendanceRes.data ?? [];
 
     const nextDraft: Record<string, AttendanceDraftEntry> = {};
@@ -54,7 +57,7 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
       const existing = existingRecords.find((r) => r.student_id === student.id);
       nextDraft[student.id] = {
         status: (existing?.status as AttendanceStatus) ?? "present",
-        note: existing?.note ?? "",
+        note: existing?.reason_note ?? "",
       };
     }
 
@@ -110,12 +113,12 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
         const entry = draft[student.id] ?? { status: "present" as AttendanceStatus, note: "" };
         return {
           student_id: student.id,
-          folder_id: classId,
+          class_id: classId,
           user_id: userId,
-          date,
+          attendance_date: date,
           quarter,
           status: entry.status,
-          note: entry.note.trim() || null,
+          reason_note: entry.note.trim() || null,
           updated_at: new Date().toISOString(),
         };
       });
@@ -124,7 +127,7 @@ export function useClassAttendance(classId: string | undefined, initialDate?: st
 
       const { error } = await supabase
         .from("attendance_records")
-        .upsert(rows, { onConflict: "student_id,folder_id,date" });
+        .upsert(rows, { onConflict: "student_id,class_id,attendance_date" });
       if (error) throw error;
 
       await loadForDate();

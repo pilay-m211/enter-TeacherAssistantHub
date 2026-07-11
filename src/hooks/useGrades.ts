@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { upsertGradeRecord } from "@/lib/gradeWrites";
 
-export type GradeRow = Tables<"grade_ledger">;
+export type GradeRow = Tables<"grade_records">;
 
 export function useGrades(assignmentId: string | undefined) {
   const [grades, setGrades] = useState<GradeRow[]>([]);
@@ -13,9 +13,9 @@ export function useGrades(assignmentId: string | undefined) {
     if (!assignmentId) return;
     setLoading(true);
     const { data } = await supabase
-      .from("grade_ledger")
+      .from("grade_records")
       .select("*")
-      .eq("file_id", assignmentId);
+      .eq("assignment_id", assignmentId);
     setGrades(data ?? []);
     setLoading(false);
   }, [assignmentId]);
